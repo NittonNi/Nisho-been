@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="theme-color" content="#0c0c0c" />
-<title>Nisho — Travel Tracker</title>
+<title>Nisho — Premium Travel Tracker</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -285,7 +285,6 @@ const REGIONS = ['All', 'Europe', 'Americas', 'Asia', 'Africa', 'Middle East', '
 
 const numToA2 = { 4:'AF',8:'AL',12:'DZ',24:'AO',32:'AR',36:'AU',40:'AT',44:'BS',48:'BH',50:'BD',52:'BB',112:'BY',56:'BE',84:'BZ',204:'BJ',64:'BT',68:'BO',70:'BA',72:'BW',76:'BR',96:'BN',100:'BG',854:'BF',108:'BI',132:'CV',116:'KH',120:'CM',124:'CA',140:'CF',148:'TD',152:'CL',156:'CN',170:'CO',174:'KM',178:'CG',180:'CD',188:'CR',191:'HR',192:'CU',196:'CY',203:'CZ',208:'DK',262:'DJ',214:'DO',218:'EC',818:'EG',222:'SV',226:'GQ',232:'ER',233:'EE',748:'SZ',231:'ET',242:'FJ',246:'FI',250:'FR',266:'GA',270:'GM',268:'GE',276:'DE',288:'GH',300:'GR',320:'GT',324:'GN',328:'GY',332:'HT',340:'HN',348:'HU',352:'IS',356:'IN',360:'ID',364:'IR',368:'IQ',372:'IE',376:'IL',380:'IT',388:'JM',392:'JP',400:'JO',398:'KZ',404:'KE',414:'KW',417:'KG',418:'LA',428:'LV',422:'LB',426:'LS',430:'LR',434:'LY',438:'LI',440:'LT',442:'LU',450:'MG',454:'MW',458:'MY',462:'MV',466:'ML',470:'MT',478:'MR',480:'MU',484:'MX',498:'MD',496:'MN',499:'ME',504:'MA',508:'MZ',104:'MM',516:'NA',524:'NP',528:'NL',554:'NZ',558:'NI',562:'NE',566:'NG',408:'KP',807:'MK',578:'NO',512:'OM',586:'PK',591:'PA',598:'PG',600:'PY',604:'PE',608:'PH',616:'PL',620:'PT',634:'QA',642:'RO',643:'RU',646:'RW',682:'SA',686:'SN',688:'RS',694:'SL',702:'SG',703:'SK',705:'SI',90:'SB',706:'SO',710:'ZA',410:'KR',728:'SS',724:'ES',144:'LK',729:'SD',740:'SR',748:'SZ',752:'SE',756:'CH',760:'SY',158:'TW',762:'TJ',834:'TZ',764:'TH',626:'TL',768:'TG',780:'TT',788:'TN',792:'TR',795:'TM',800:'UG',804:'UA',784:'AE',826:'GB',840:'US',858:'UY',860:'UZ',862:'VE',704:'VN',887:'YE',894:'ZM',716:'ZW' };
 
-// ─── 1.B. EPIC SUB-REGIONS DICTIONARY ───────────────────────
 const SUB_REGIONS = {
   'US': ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'],
   'ES': ['Andalucía','Aragón','Asturias','Baleares','Canarias','Cantabria','Castilla-La Mancha','Castilla y León','Cataluña','Comunidad Valenciana','Extremadura','Galicia','Madrid','Murcia','Navarra','País Vasco','La Rioja','Ceuta','Melilla'],
@@ -302,7 +301,7 @@ const SUB_REGIONS = {
   'IN': ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Andaman and Nicobar','Chandigarh','Delhi','Jammu and Kashmir','Ladakh'],
   'CN': ['Anhui','Fujian','Gansu','Guangdong','Guizhou','Hainan','Hebei','Heilongjiang','Henan','Hubei','Hunan','Jiangsu','Jiangxi','Jilin','Liaoning','Qinghai','Shaanxi','Shandong','Shanxi','Sichuan','Yunnan','Zhejiang','Guangxi','Inner Mongolia','Ningxia','Tibet','Xinjiang','Beijing','Chongqing','Shanghai','Tianjin','Hong Kong','Macau']
 };
-  
+
 // ─── 2. APP STATE ───────────────────────────────────────────
 let state = {
   trips: [], 
@@ -312,8 +311,8 @@ let state = {
 
 let currentEditId = null;
 let currentFilterRegion = 'All';
-let selectedCountryCode = null; // For the trip form
-let stopsData = []; // Array of stop objects
+let selectedCountryCode = null; 
+let stopsData = []; 
 let mapSvg, mapG, pathGen, zoom;
 
 // ─── 3. INIT & CORE LOGIC ───────────────────────────────────
@@ -378,7 +377,17 @@ function initMap() {
       .attr('stroke', '#0c0c0c').attr('stroke-width', 0.5)
       .on('click', (ev, d) => {
         const c = COUNTRIES.find(x => x.code === d.properties.iso);
-        if(c) openTripModal(null, c);
+        if(c) {
+            // Animacion Zoom a País
+            const bounds = pathGen.bounds(d);
+            const dx = bounds[1][0] - bounds[0][0], dy = bounds[1][1] - bounds[0][1];
+            const x = (bounds[0][0] + bounds[1][0]) / 2, y = (bounds[0][1] + bounds[1][1]) / 2;
+            const scale = Math.max(1, Math.min(6, 0.9 / Math.max(dx / 900, dy / 460)));
+            const translate = [450 - scale * x, 240 - scale * y];
+            mapSvg.transition().duration(750).call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+            
+            openTripModal(null, c);
+        }
       });
     renderMapColors();
   });
@@ -477,7 +486,7 @@ function selectCountryForm(code, name, flag) {
   selectedCountryCode = code;
   document.getElementById('fm-country-input').value = `${flag} ${name}`;
   document.getElementById('fm-country-list').classList.remove('show');
-  renderStopsUI(); // Re-render to show/hide US States dropdown
+  renderStopsUI(); // Re-render to show/hide Regions dropdown
 }
 
 function openTripModal(tripId = null, prefillCountryObj = null) {
@@ -494,7 +503,6 @@ function openTripModal(tripId = null, prefillCountryObj = null) {
     document.getElementById('fm-purpose').value = t.purpose || state.purposes[0];
     document.getElementById('fm-trans').value = t.trans;
     document.getElementById('fm-notes').value = t.notes || '';
-    // Deep clone stops
     stopsData = JSON.parse(JSON.stringify(t.stops || []));
   } else {
     selectedCountryCode = prefillCountryObj ? prefillCountryObj.code : null;
@@ -514,7 +522,7 @@ function createEmptyStop() {
 }
 
 function addStop() {
-  saveStopsState(); // sync DOM to array before adding
+  saveStopsState();
   stopsData.push(createEmptyStop());
   renderStopsUI();
 }
@@ -523,14 +531,13 @@ function removeStop(id) {
   renderStopsUI();
 }
 
-// Visual Hotel Tags Logic
 function addHotelToStop(stopId) {
   saveStopsState();
   const input = document.getElementById(`hotel-input-${stopId}`);
   const val = input.value.trim();
   if(val) {
     const stop = stopsData.find(s => s.id === stopId);
-    stop.hotels.push(va l);
+    stop.hotels.push(val);
     renderStopsUI();
   }
 }
@@ -556,11 +563,9 @@ function saveStopsState() {
 
 function renderStopsUI() {
   const container = document.getElementById('stops-container');
-  // Obtenemos las subregiones del país seleccionado (si las hay)
   const regionsList = SUB_REGIONS[selectedCountryCode];
   
   container.innerHTML = stopsData.map((s, i) => {
-    // Lógica dinámica: Si hay lista, mostramos un <select>. Si no, un <input> de texto libre.
     let stateHtml = '';
     if (regionsList) {
       stateHtml = `<select class="input-solid" id="stop-state-${s.id}">
@@ -634,9 +639,8 @@ function switchScreen(id, btn) {
   document.getElementById('screen-'+id).classList.add('active'); btn.classList.add('active');
 }
 
-// Airtable (Mocked logic to respect constraints of huge JSON payload)
 async function syncWithAirtable() {
-  showToast('Airtable sync structure ready! (Configure API in next step)');
+  showToast('Airtable sync structure ready! (Configure API logic here)');
 }
 
 document.addEventListener('DOMContentLoaded', init);
