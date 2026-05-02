@@ -1,684 +1,688 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="theme-color" content="#0c0c0c" />
-<title>Nisho — Premium Travel Tracker</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#080808"/>
+<title>Nisho</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
-
 <style>
-/* ─── 1. RESET & BASE ──────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-input, textarea, select { user-select: auto; font-family: inherit; }
-html, body { height: 100%; overscroll-behavior-y: none; background: #0c0c0c; font-family: 'Inter', -apple-system, sans-serif; color: #e8e4de; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
-button { font-family: inherit; cursor: pointer; outline: none; }
-::-webkit-scrollbar { width: 0; height: 0; }
-
-/* ─── 2. LAYOUT & NAVIGATION ───────────────────────────────── */
-.app { display: flex; flex-direction: column; height: 100vh; max-width: 480px; margin: 0 auto; position: relative; background: #0c0c0c; padding-bottom: env(safe-area-inset-bottom); overflow: hidden; }
-
-.global-fab { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; width: 44px; height: 44px; border-radius: 22px; background: #b8e060; color: #0c0c0c; border: none; font-size: 26px; font-weight: 300; display: flex; align-items: center; justify-content: center; z-index: 200; box-shadow: 0 4px 16px rgba(184, 224, 96, 0.25); transition: transform 0.2s; }
-.global-fab:active { transform: scale(0.9); }
-
-.bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: calc(72px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); background: rgba(12, 12, 12, 0.9); backdrop-filter: blur(20px); border-top: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-around; z-index: 100; }
-.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px 8px; background: none; border: none; color: #555; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-.nav-item.active { color: #e8e4de; }
-.nav-item.active svg { stroke: #b8e060; }
-.nav-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-.nav-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-
-.screen { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
-.screen.active { display: flex; flex-direction: column; animation: fadeScreen 0.3s ease; }
-@keyframes fadeScreen { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-.screen-header { padding: max(24px, env(safe-area-inset-top)) 80px 16px 20px; background: #0c0c0c; position: sticky; top: 0; z-index: 10; flex-shrink: 0; }
-.screen-title { font-size: 28px; font-weight: 300; color: #e8e4de; letter-spacing: -0.02em; }
-.screen-sub { font-size: 11px; font-weight: 600; color: #b8e060; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px; }
-
-/* ─── 3. MAP SCREEN ────────────────────────────────────────── */
-#world-map-svg { width: 100%; height: 48vh; flex-shrink: 0; display: block; background: #0c0c0c; cursor: grab; }
-#world-map-svg:active { cursor: grabbing; }
-
-.map-dashboard { background: #111; border-top: 1px solid #1a1a1a; flex: 1; display: flex; flex-direction: column; }
-.map-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #1a1a1a; border-bottom: 1px solid #1a1a1a; flex: 1;}
-.map-stat { background: #111; padding: 20px; display: flex; flex-direction: column; justify-content: center; }
-.map-stat-num { font-size: 32px; font-weight: 300; color: #e8e4de; line-height: 1; margin-bottom: 6px; }
-.map-stat-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #666; }
-.progress-wrap { height: 3px; background: #222; border-radius: 2px; margin-top: 12px; overflow: hidden; }
-.progress-fill { height: 100%; background: #b8e060; transition: width 1s ease; }
-
-/* ─── 4. COUNTRIES SCREEN ──────────────────────────────────── */
-.search-container { padding: 0 20px 12px; border-bottom: 1px solid #1a1a1a; background: #0c0c0c; position: sticky; top: max(75px, env(safe-area-inset-top) + 50px); z-index: 9; }
-.search-box { display: flex; align-items: center; background: #181818; border: 1px solid #2a2a2a; border-radius: 12px; padding: 0 16px; gap: 10px; }
-.search-box:focus-within { border-color: #b8e060; }
-.search-box svg { width: 16px; height: 16px; stroke: #666; }
-.search-box input { flex: 1; background: none; border: none; padding: 12px 0; font-size: 14px; color: #e8e4de; outline: none; }
-
-.region-tabs { display: flex; gap: 8px; padding: 12px 20px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #141414; }
-.region-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: 1px solid #2a2a2a; background: transparent; color: #888; font-size: 12px; font-weight: 500; transition: all 0.2s; }
-.region-tab.active { background: #222; color: #e8e4de; border-color: #444; }
-
-.country-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #141414; cursor: pointer; }
-.country-item-left { display: flex; align-items: center; gap: 16px; }
-.country-flag { font-size: 26px; width: 32px; text-align: center; }
-.country-name { font-size: 15px; font-weight: 500; color: #d8d4ce; margin-bottom: 2px; }
-.country-region { font-size: 11px; color: #555; }
-.country-status { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; padding: 4px 8px; border-radius: 4px; }
-.status-visited { background: rgba(184, 224, 96, 0.1); color: #b8e060; }
-.status-none { color: #333; }
-
-/* ─── 5. ROADMAP SCREEN (NEW TIMELINE DESIGN) ──────────────── */
-.timeline-container { padding: 20px; position: relative; }
-.timeline-container::before { content: ''; position: absolute; left: 33px; top: 30px; bottom: 0; width: 2px; background: #1a1a1a; }
-
-.timeline-item { position: relative; padding-left: 44px; margin-bottom: 32px; }
-.timeline-dot { position: absolute; left: 8px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: #b8e060; border: 2px solid #0c0c0c; z-index: 2; box-shadow: 0 0 0 4px #0c0c0c; }
-.timeline-card { background: #111; border: 1px solid #1e1e1e; border-radius: 16px; padding: 16px; cursor: pointer; transition: background 0.2s; }
-.timeline-card:active { background: #161616; }
-
-.tl-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
-.tl-country { font-size: 16px; font-weight: 600; color: #e8e4de; display: flex; align-items: center; gap: 8px; }
-.tl-trans { font-size: 18px; color: #888; }
-.tl-meta { font-size: 11px; font-weight: 500; color: #666; text-transform: uppercase; letter-spacing: 0.05em; display: flex; gap: 8px; margin-top: 4px; }
-
-.tl-stops { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #1a1a1a; padding-top: 12px; margin-top: 4px; }
-.tl-stop-item { display: flex; align-items: flex-start; gap: 8px; }
-.tl-stop-icon { font-size: 12px; margin-top: 2px; }
-.tl-stop-details { flex: 1; }
-.tl-city { font-size: 14px; font-weight: 500; color: #d8d4ce; }
-.tl-hotels { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px; }
-.tl-hotel-badge { font-size: 11px; background: #1a2e05; border: 1px solid #2a4a0a; color: #b8e060; padding: 2px 8px; border-radius: 4px; }
-
-/* ─── 6. PROFILE SCREEN ────────────────────────────────────── */
-.profile-hero { padding: 40px 20px 30px; display: flex; flex-direction: column; align-items: center; border-bottom: 1px solid #1a1a1a; }
-.avatar-large { width: 80px; height: 80px; border-radius: 50%; background: #111; border: 2px solid #b8e060; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px; }
-.profile-name-lg { font-size: 20px; font-weight: 600; color: #fff; }
-
-.settings-section { padding: 24px 20px; }
-.settings-label { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
-.setting-card { background: #111; border: 1px solid #1e1e1e; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-.input-dark { width: 100%; background: #080808; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 16px; font-size: 14px; color: #fff; outline: none; margin-bottom: 12px; }
-.btn-primary { width: 100%; padding: 14px; background: #b8e060; color: #0c0c0c; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; }
-
-.purpose-tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.purpose-tag { background: #181818; border: 1px solid #333; padding: 6px 12px; border-radius: 16px; font-size: 13px; color: #ccc; display: flex; align-items: center; gap: 8px; }
-.purpose-tag span { cursor: pointer; color: #ff5555; }
-
-/* ─── 7. MODALS (SHEETS) ───────────────────────────────────── */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 300; display: none; align-items: flex-end; justify-content: center; }
-.overlay.open { display: flex; animation: fadeIn 0.2s ease; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.sheet { background: #111; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 92vh; display: flex; flex-direction: column; position: relative; animation: slideUp 0.35s cubic-bezier(0.3, 1, 0.3, 1); }
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-/* NEW: X CLOSE BUTTON */
-.btn-close-sheet { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; background: #222; border: none; border-radius: 50%; color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; z-index: 10; }
-
-.sheet-handle { width: 40px; height: 5px; background: #333; border-radius: 3px; margin: 12px auto 0; flex-shrink: 0; }
-.sheet-content { padding: 24px; overflow-y: auto; flex: 1; padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
-
-.form-title { font-size: 24px; font-weight: 600; color: #fff; margin-bottom: 24px; }
-.form-group { margin-bottom: 20px; position: relative; }
-.form-label { display: block; font-size: 12px; font-weight: 500; color: #888; margin-bottom: 8px; }
-
-/* Selectores y campos */
-.custom-search-input { width: 100%; background: #181818; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px 16px; font-size: 15px; color: #fff; outline: none; }
-.custom-search-input:focus { border-color: #b8e060; }
-.dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: #181818; border: 1px solid #333; border-radius: 8px; margin-top: 4px; max-height: 200px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-.dropdown-list.show { display: block; }
-.dropdown-item { padding: 12px 16px; color: #fff; cursor: pointer; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 10px; }
-
-.select-dark { width: 100%; background: #181818; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px 16px; font-size: 15px; color: #fff; outline: none; appearance: none; }
-.input-solid { width: 100%; background: #0c0c0c; border: 1px solid #2a2a2a; border-radius: 8px; padding: 10px 12px; font-size: 14px; color: #fff; outline: none; }
-
+:root{
+  --bg:#080808;--bg1:#0f0f0f;--bg2:#161616;--bg3:#1e1e1e;
+  --b1:#232323;--b2:#2e2e2e;--b3:#383838;
+  --t1:#f0ece4;--t2:#8a8480;--t3:#4a4640;
+  --g:#c4f04a;--gd:rgba(196,240,74,.08);--gg:rgba(196,240,74,.18);
+  --red:#ff4d4d;
+  --fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;
+  --r:12px;--r2:20px;
+  --nh:calc(68px + env(safe-area-inset-bottom));
+  --st:env(safe-area-inset-top,20px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+input,textarea,select{font-family:inherit;user-select:auto}
+::-webkit-scrollbar{display:none}
+html,body{height:100%;background:var(--bg);font-family:var(--fb);color:var(--t1);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button{font-family:inherit;cursor:pointer;outline:none}
+ 
+.app{display:flex;flex-direction:column;height:100dvh;max-width:480px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg)}
+ 
+/* SCREENS */
+.screen{position:absolute;inset:0;bottom:var(--nh);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .22s ease,transform .22s ease}
+.screen.active{opacity:1;pointer-events:all;transform:translateY(0)}
+ 
+/* HEADER */
+.sh{position:sticky;top:0;z-index:20;background:var(--bg);padding:max(20px,var(--st)) 20px 14px;flex-shrink:0}
+.sh-eye{font-family:var(--fh);font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--g);margin-bottom:4px}
+.sh-title{font-family:var(--fh);font-size:30px;font-weight:800;letter-spacing:-.02em;color:var(--t1);line-height:1}
+ 
+/* BOTTOM NAV */
+.bnav{position:absolute;bottom:0;left:0;right:0;height:var(--nh);padding-bottom:env(safe-area-inset-bottom);background:rgba(8,8,8,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;align-items:flex-start;padding-top:10px;z-index:100}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;color:var(--t3);font-family:var(--fh);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;transition:color .18s}
+.ni.active{color:var(--t1)}
+.ni-ico{width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.ni-ico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke .18s}
+.ni.active .ni-ico svg{stroke:var(--g)}
+ 
+/* FAB */
+.fab{position:fixed;top:max(14px,var(--st));right:16px;width:44px;height:44px;background:var(--g);color:var(--bg);border:none;border-radius:22px;font-size:24px;font-weight:300;display:flex;align-items:center;justify-content:center;z-index:150;transition:transform .15s;box-shadow:0 0 24px var(--gg)}
+.fab:active{transform:scale(.9)}
+ 
+/* ── MAP SCREEN ── */
+#sm{padding-bottom:0}
+.mt{padding:max(20px,var(--st)) 20px 10px;flex-shrink:0}
+.mt-logo{font-family:var(--fh);font-size:10px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--t3);margin-bottom:6px}
+.mt-hl{font-family:var(--fh);font-size:34px;font-weight:800;letter-spacing:-.03em;color:var(--t1);line-height:1}
+.mt-hl em{color:var(--g);font-style:normal}
+#map-svg{width:100%;display:block;flex-shrink:0;cursor:grab;touch-action:none}
+#map-svg:active{cursor:grabbing}
+.mf{background:var(--bg1);border-top:1px solid var(--b1);flex:1;display:flex;flex-direction:column}
+.sg{display:grid;grid-template-columns:1fr 1fr;flex:1}
+.sc{padding:18px 20px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--b1);border-bottom:1px solid var(--b1)}
+.sc:nth-child(2){border-right:none}
+.sc:nth-child(3){border-bottom:none}
+.sc:nth-child(4){border-right:none;border-bottom:none}
+.sv{font-family:var(--fh);font-size:36px;font-weight:800;color:var(--t1);line-height:1;letter-spacing:-.02em}
+.sl{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-top:4px}
+.sb{height:2px;background:var(--b1);border-radius:1px;margin-top:10px;overflow:hidden}
+.sbf{height:100%;background:var(--g);border-radius:1px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.mtt{position:absolute;background:var(--bg2);border:1px solid var(--b2);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:500;color:var(--t1);pointer-events:none;opacity:0;transition:opacity .12s;z-index:30;white-space:nowrap;transform:translate(-50%,-130%)}
+ 
+/* ── COUNTRIES SCREEN ── */
+.sw{padding:0 20px 12px;flex-shrink:0;background:var(--bg)}
+.si{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:0 14px;transition:border-color .2s}
+.si:focus-within{border-color:var(--b2)}
+.si svg{width:15px;height:15px;stroke:var(--t3);flex-shrink:0}
+.si input{flex:1;background:none;border:none;padding:12px 0;font-size:14px;color:var(--t1);outline:none}
+.si input::placeholder{color:var(--t3)}
+.rs{display:flex;gap:6px;padding:0 20px 12px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-shrink:0}
+.rt{flex-shrink:0;padding:5px 14px;border-radius:30px;border:1px solid var(--b1);background:transparent;color:var(--t2);font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.06em;transition:all .18s}
+.rt.active{background:var(--bg3);color:var(--t1);border-color:var(--b2)}
+.cl{flex:1;overflow-y:auto}
+.ci{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background .12s;gap:14px}
+.ci:hover{background:var(--bg1)}
+.cf{font-size:24px;width:30px;text-align:center;flex-shrink:0}
+.cn{flex:1;min-width:0}
+.cn-name{font-size:15px;font-weight:500;color:var(--t1);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cn-reg{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px}
+.cbdg{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--gd);color:var(--g);padding:2px 6px;border-radius:4px;border:1px solid rgba(196,240,74,.2)}
+.ck{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
+.ck.on{background:var(--g);border-color:var(--g)}
+.ck.on svg{stroke:var(--bg)}
+.ck svg{width:12px;height:12px;fill:none;stroke:transparent;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+ 
+/* ── ROADMAP SCREEN ── */
+.rb{flex:1;overflow-y:auto;padding:0 20px 24px}
+.tl{position:relative;padding-top:8px}
+.tl::before{content:'';position:absolute;left:5px;top:14px;bottom:0;width:1px;background:var(--b1)}
+.tli{position:relative;padding-left:26px;margin-bottom:22px}
+.tld{position:absolute;left:0;top:8px;width:11px;height:11px;border-radius:50%;background:var(--g);border:2px solid var(--bg);z-index:1;box-shadow:0 0 0 4px var(--gd)}
+.tlc{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r2);overflow:hidden;cursor:pointer;transition:border-color .18s,transform .12s}
+.tlc:hover{border-color:var(--b2);transform:translateY(-1px)}
+.tlc:active{transform:scale(.99)}
+.tlch{padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--b1)}
+.tlcn{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--t1);display:flex;align-items:center;gap:8px}
+.tlm{margin-top:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tlch-r{font-size:20px;opacity:.65}
+.chip{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t2);background:var(--bg3);padding:2px 8px;border-radius:4px}
+.chip.g{color:var(--g);background:var(--gd)}
+.tls{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.tlsr{display:flex;gap:10px;align-items:flex-start}
+.tlscity{font-size:14px;font-weight:500;color:var(--t1)}
+.tlsdt{font-size:11px;color:var(--t3);margin-top:1px}
+.tlshtl{margin-top:5px;display:flex;flex-wrap:wrap;gap:5px}
+.htag{font-size:11px;background:var(--gd);border:1px solid rgba(196,240,74,.2);color:var(--g);padding:3px 8px;border-radius:5px}
+.es{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center;gap:12px;color:var(--t3)}
+.es-i{font-size:36px;opacity:.4}
+.es-t{font-size:14px;line-height:1.6}
+ 
+/* ── PROFILE SCREEN ── */
+.pb{flex:1;overflow-y:auto}
+.ph{padding:32px 20px 24px;border-bottom:1px solid var(--b1);display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.av{width:72px;height:72px;border-radius:50%;background:var(--bg2);border:2px solid var(--g);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 0 6px var(--gd)}
+.pn{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--t1)}
+.phand{font-size:12px;color:var(--t3)}
+.psg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--b1);border-bottom:1px solid var(--b1)}
+.psc{background:var(--bg);padding:14px 6px;text-align:center}
+.psn{font-family:var(--fh);font-size:22px;font-weight:700;color:var(--t1);line-height:1}
+.psl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-top:3px}
+.psb{padding:20px}
+.psl2{font-family:var(--fh);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+.pcard{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r2);padding:18px;margin-bottom:20px}
+.ptags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.ptag{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--b2);padding:5px 10px;border-radius:20px;font-size:13px;color:var(--t2)}
+.ptag-x{color:var(--red);cursor:pointer;font-size:11px;font-weight:700}
+.apr{display:flex;gap:8px}
+.id{flex:1;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--t1);outline:none;transition:border-color .2s}
+.id:focus{border-color:var(--b2)}
+.bsm{padding:10px 18px;background:var(--bg3);border:1px solid var(--b2);border-radius:var(--r);color:var(--t2);font-size:13px;font-weight:500}
+.bsm:hover{color:var(--t1)}
+.atf{margin-bottom:12px}
+.atf label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:5px}
+.atf input{width:100%;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--t1);outline:none}
+.atf input:focus{border-color:var(--b2)}
+.atsr{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.atd{width:8px;height:8px;border-radius:50%;background:var(--t3)}
+.atd.on{background:var(--g);box-shadow:0 0 8px var(--g)}
+.atst{font-size:12px;color:var(--t3)}
+.sr{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--b1);cursor:pointer}
+.sr:last-child{border-bottom:none}
+.srl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--t2)}
+.sri{font-size:18px;width:22px;text-align:center}
+.sra{color:var(--b2);font-size:18px}
+.vt{text-align:center;font-size:11px;color:var(--t3);letter-spacing:.15em;padding:16px;border-top:1px solid var(--b1)}
+ 
+/* ── OVERLAYS / SHEETS ── */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:300;display:none;align-items:flex-end;justify-content:center}
+.ov.open{display:flex;animation:ovin .2s ease}
+@keyframes ovin{from{opacity:0}to{opacity:1}}
+.sht{background:var(--bg1);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:94dvh;display:flex;flex-direction:column;animation:shup .3s cubic-bezier(.3,1,.3,1)}
+@keyframes shup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.shd{width:36px;height:4px;background:var(--b2);border-radius:2px;margin:10px auto 0;flex-shrink:0}
+.shsc{flex:1;overflow-y:auto;padding:20px 20px calc(env(safe-area-inset-bottom) + 32px)}
+.shtp{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.shtitle{font-family:var(--fh);font-size:22px;font-weight:800;color:var(--t1)}
+.bcl{width:32px;height:32px;background:var(--bg3);border:none;border-radius:50%;color:var(--t2);font-size:15px;display:flex;align-items:center;justify-content:center}
+.bcl:hover{color:var(--t1)}
+ 
+/* FORM */
+.fg{margin-bottom:18px}
+.fl{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+.fi{width:100%;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:12px 14px;font-size:14px;color:var(--t1);outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--b2)}
+.fi::placeholder{color:var(--t3)}
+.fs{width:100%;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:12px 14px;font-size:14px;color:var(--t1);outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a4640' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.fs option{background:var(--bg2)}
+.fta{width:100%;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:12px 14px;font-size:14px;color:var(--t1);outline:none;resize:none;height:80px;line-height:1.5}
+.fta:focus{border-color:var(--b2)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ 
+/* AUTOCOMPLETE */
+.acw{position:relative}
+.acl{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);max-height:200px;overflow-y:auto;z-index:50;display:none;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.acl.open{display:block}
+.aci{padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--b1);font-size:14px;color:var(--t1);display:flex;align-items:center;gap:10px;transition:background .1s}
+.aci:hover{background:var(--bg3)}
+.aci:last-child{border-bottom:none}
+ 
+/* TYPE SELECTOR */
+.tsel{display:flex;gap:8px;margin-bottom:20px}
+.tbtn{flex:1;padding:12px;border-radius:var(--r);border:1px solid var(--b1);background:transparent;color:var(--t3);font-family:var(--fh);font-size:12px;font-weight:700;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .18s}
+.tbtn .tbi{font-size:22px}
+.tbtn.active{background:var(--gd);border-color:rgba(196,240,74,.3);color:var(--g)}
+ 
 /* STOPS */
-.stop-card { background: #161616; border: 1px solid #222; border-radius: 12px; padding: 16px; margin-bottom: 16px; position: relative; }
-.stop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: #b8e060; }
-.btn-remove-stop { background: none; border: none; color: #ff5555; font-size: 12px; font-weight: 600; }
-.stop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-
-.hotel-input-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
-.btn-add-hotel { background: #2a2a2a; border: none; border-radius: 8px; padding: 0 16px; color: #fff; font-weight: 600; }
-.btn-add-stop { width: 100%; padding: 12px; background: transparent; border: 1px dashed #444; color: #888; border-radius: 12px; font-weight: 600; margin-bottom: 24px; }
-
-/* Country Details Sheet */
-.cs-header { text-align: center; margin-bottom: 24px; padding-top: 10px;}
-.cs-flag { font-size: 64px; line-height: 1; margin-bottom: 8px; }
-.cs-name { font-size: 24px; font-weight: 600; color: #fff; }
-.cs-history { background: #181818; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
-
-/* Toast */
-.toast { position: fixed; top: 40px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #b8e060; color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 600; font-size: 14px; z-index: 1000; opacity: 0; pointer-events: none; transition: all 0.3s; }
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.stpc{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:16px;margin-bottom:12px}
+.stph{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.stpn{font-family:var(--fh);font-size:12px;font-weight:700;color:var(--g);letter-spacing:.1em;text-transform:uppercase}
+.brs{background:none;border:none;color:var(--t3);font-size:11px;font-weight:700;letter-spacing:.06em;padding:0}
+.brs:hover{color:var(--red)}
+.hr{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.ht{display:flex;align-items:center;gap:6px;background:var(--gd);border:1px solid rgba(196,240,74,.2);color:var(--g);padding:3px 9px;border-radius:5px;font-size:12px}
+.htx{cursor:pointer;opacity:.6;font-size:10px}
+.htx:hover{opacity:1;color:var(--red)}
+.bast{width:100%;padding:12px;background:transparent;border:1px dashed var(--b2);color:var(--t3);border-radius:var(--r2);font-family:var(--fh);font-size:12px;font-weight:700;letter-spacing:.06em;margin-bottom:20px;transition:all .18s}
+.bast:hover{border-color:var(--b3);color:var(--t2)}
+.bah{background:var(--bg3);border:1px solid var(--b2);border-radius:var(--r);padding:0 14px;color:var(--t2);font-size:16px;font-weight:700;flex-shrink:0;height:46px;display:flex;align-items:center}
+.bah:hover{color:var(--t1)}
+ 
+/* ACTIONS */
+.sact{display:flex;gap:10px;margin-top:24px}
+.bp{flex:1;padding:14px;background:var(--g);color:var(--bg);border:none;border-radius:var(--r);font-family:var(--fh);font-size:14px;font-weight:800;letter-spacing:.04em;transition:opacity .15s}
+.bp:hover{opacity:.88}
+.bg{flex:1;padding:14px;background:transparent;border:1px solid var(--b2);border-radius:var(--r);color:var(--t2);font-family:var(--fh);font-size:14px;font-weight:700;letter-spacing:.04em;transition:all .18s}
+.bg:hover{color:var(--t1)}
+.bd{background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.2);color:var(--red)}
+.bd:hover{background:rgba(255,77,77,.14)}
+hr.dv{border:none;border-top:1px solid var(--b1);margin:18px 0}
+ 
+/* COUNTRY SHEET */
+.csfb{font-size:56px;text-align:center;margin:6px 0 10px}
+.csnb{font-family:var(--fh);font-size:24px;font-weight:800;color:var(--t1);text-align:center;margin-bottom:20px}
+.cstc{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .18s}
+.cstc:hover{border-color:var(--b2)}
+.cstm{font-size:11px;color:var(--t3);display:flex;gap:8px;margin-top:3px}
+ 
+/* TOAST */
+.toast{position:fixed;top:max(18px,var(--st));left:50%;transform:translateX(-50%) translateY(-10px);background:var(--g);color:var(--bg);padding:10px 22px;border-radius:30px;font-family:var(--fh);font-weight:700;font-size:13px;letter-spacing:.05em;z-index:500;opacity:0;pointer-events:none;transition:all .28s;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red);color:#fff}
+ 
+/* LOADING */
+.ldg{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:999;transition:opacity .5s}
+.ldg.out{opacity:0;pointer-events:none}
+.ldl{font-family:var(--fh);font-size:14px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--t1)}
+.ldbw{width:100px;height:1px;background:var(--b2)}
+.ldb{height:100%;background:var(--g);width:0;transition:width .7s ease}
 </style>
 </head>
 <body>
-
-<div class="toast" id="toast">Message</div>
-
+<div class="ldg" id="ldg"><div class="ldl">Nisho</div><div class="ldbw"><div class="ldb" id="ldb"></div></div></div>
+<div class="toast" id="toast"></div>
 <div class="app">
-  <button class="global-fab" onclick="openTripModal()">+</button>
-
-  <!-- ═══ 1. MAP SCREEN ══════════════════════════════════════ -->
-  <div class="screen active" id="screen-map">
-    <div class="screen-header"><div class="screen-sub">Overview</div><div class="screen-title">Your World</div></div>
-    <svg id="world-map-svg" viewBox="0 0 900 460"><rect width="900" height="460" fill="transparent"/></svg>
-    <div class="map-dashboard">
-      <div class="map-stats-grid">
-        <div class="map-stat">
-            <div class="map-stat-num" id="dash-countries">0</div>
-            <div class="map-stat-label">Countries Visited</div>
-        </div>
-        <div class="map-stat">
-            <div class="map-stat-num" id="dash-pct">0%</div>
-            <div class="map-stat-label">Of the World</div>
-            <div class="progress-wrap"><div class="progress-fill" id="dash-progress" style="width:0%"></div></div>
-        </div>
-        <div class="map-stat">
-            <div class="map-stat-num" id="dash-trips">0</div>
-            <div class="map-stat-label">Total Trips</div>
-        </div>
-        <div class="map-stat">
-            <div class="map-stat-num" id="dash-days">0</div>
-            <div class="map-stat-label">Days Away</div>
-        </div>
+  <button class="fab" onclick="openTripModal()">+</button>
+ 
+  <!-- MAP -->
+  <div class="screen active" id="sm">
+    <div class="mt">
+      <div class="mt-logo">Nisho</div>
+      <div class="mt-hl">Your <em id="hdr-n">0</em><br>countries</div>
+    </div>
+    <svg id="map-svg" viewBox="0 0 900 440"><rect width="900" height="440" fill="transparent"/></svg>
+    <div class="mtt" id="mtt"></div>
+    <div class="mf">
+      <div class="sg">
+        <div class="sc"><div class="sv" id="sc">0</div><div class="sl">Countries</div><div class="sb"><div class="sbf" id="sbf" style="width:0%"></div></div></div>
+        <div class="sc"><div class="sv" id="sp">0%</div><div class="sl">Of the world</div></div>
+        <div class="sc"><div class="sv" id="str">0</div><div class="sl">Trips logged</div></div>
+        <div class="sc"><div class="sv" id="sdy">0</div><div class="sl">Days away</div></div>
       </div>
     </div>
   </div>
-
-  <!-- ═══ 2. COUNTRIES SCREEN ════════════════════════════════ -->
-  <div class="screen" id="screen-countries">
-    <div class="screen-header" style="padding-bottom: 12px;"><div class="screen-sub">Exploration</div><div class="screen-title">Countries</div></div>
-    
-    <div class="search-container">
-      <div class="search-box"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="inp-search" placeholder="Search any country..." oninput="renderCountriesList()" /></div>
-    </div>
-    <div class="region-tabs" id="region-tabs"></div>
-
-    <div id="countries-list"></div>
+ 
+  <!-- COUNTRIES -->
+  <div class="screen" id="sco">
+    <div class="sh"><div class="sh-eye">Exploration</div><div class="sh-title">Countries</div></div>
+    <div class="sw"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="cs" placeholder="Search any country…" oninput="renderC()"/></div></div>
+    <div class="rs" id="rs"></div>
+    <div class="cl" id="cl"></div>
   </div>
-
-  <!-- ═══ 3. ROADMAP SCREEN ══════════════════════════════════ -->
-  <div class="screen" id="screen-roadmap">
-    <div class="screen-header"><div class="screen-sub">Chronicles</div><div class="screen-title">Roadmap</div></div>
-    <div class="timeline-container" id="roadmap-feed"></div>
+ 
+  <!-- ROADMAP -->
+  <div class="screen" id="srm">
+    <div class="sh"><div class="sh-eye">Chronicles</div><div class="sh-title">Roadmap</div></div>
+    <div class="rb"><div class="tl" id="rf"></div></div>
   </div>
-
-  <!-- ═══ 4. PROFILE SCREEN ══════════════════════════════════ -->
-  <div class="screen" id="screen-profile">
-    <div class="profile-hero"><div class="avatar-large">✦</div><div class="profile-name-lg">Traveler</div></div>
-    <div class="settings-section">
-      
-      <div class="settings-label">Trip Purposes (Concepts)</div>
-      <div class="setting-card">
-        <div class="purpose-tag-list" id="purposes-list"></div>
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="new-purpose-input" class="input-dark" placeholder="Add custom purpose..." style="margin:0;">
-          <button class="btn-primary" style="width:auto; padding:0 20px;" onclick="addPurpose()">Add</button>
+ 
+  <!-- PROFILE -->
+  <div class="screen" id="spr">
+    <div class="pb">
+      <div class="ph"><div class="av">✦</div><div class="pn" id="pn">Traveler</div><div class="phand">@houseofnisho</div></div>
+      <div class="psg">
+        <div class="psc"><div class="psn" id="psc">0</div><div class="psl">Countries</div></div>
+        <div class="psc"><div class="psn" id="psp">0%</div><div class="psl">World</div></div>
+        <div class="psc"><div class="psn" id="pst">0</div><div class="psl">Trips</div></div>
+        <div class="psc"><div class="psn" id="psd">0</div><div class="psl">Days</div></div>
+      </div>
+      <div class="psb">
+        <div class="psl2">Trip purposes</div>
+        <div class="pcard"><div class="ptags" id="ptags"></div><div class="apr"><input class="id" id="np" placeholder="Add concept…" onkeydown="if(event.key==='Enter')addP()"/><button class="bsm" onclick="addP()">Add</button></div></div>
+        <div class="psl2">Airtable sync</div>
+        <div class="pcard">
+          <div class="atsr"><div class="atd" id="atd"></div><div class="atst" id="atst">Not connected</div></div>
+          <div class="atf"><label>Personal Access Token</label><input type="password" id="att" placeholder="pat…"/></div>
+          <div class="atf"><label>Base ID</label><input type="text" id="atb" placeholder="appXXXXXXXXX"/></div>
+          <div class="atf"><label>Countries table name</label><input type="text" id="atct" value="Countries"/></div>
+          <div class="atf"><label>Hotels table name</label><input type="text" id="atht" value="Hotels"/></div>
+          <button class="bp" style="margin-top:4px;width:100%" onclick="connectAT()">Connect &amp; Sync</button>
         </div>
-      </div>
-
-      <div class="settings-label">Database Sync (Airtable)</div>
-      <div class="setting-card">
-        <label style="font-size:12px;color:#888;">Token</label>
-        <input type="password" class="input-dark" id="at-token" placeholder="pat..." />
-        <label style="font-size:12px;color:#888;">Base ID</label>
-        <input type="text" class="input-dark" id="at-base" placeholder="app..." />
-        <button class="btn-primary" style="margin-top:12px;" onclick="syncWithAirtable()">Connect & Sync</button>
+        <div class="psl2">Account</div>
+        <div class="pcard">
+          <div class="sr" onclick="editName()"><div class="srl"><div class="sri">👤</div>Edit name</div><div class="sra">›</div></div>
+          <div class="sr" onclick="exportJ()"><div class="srl"><div class="sri">📤</div>Export data (JSON)</div><div class="sra">›</div></div>
+          <div class="sr" style="border:none" onclick="if(confirm('Reset all data? This cannot be undone.'))resetAll()"><div class="srl" style="color:var(--red)"><div class="sri">🗑</div>Reset all data</div><div class="sra" style="color:var(--red)">›</div></div>
+        </div>
+        <div class="vt">NISHO · v2.0</div>
       </div>
     </div>
   </div>
-
-  <!-- ═══ BOTTOM NAV ═════════════════════════════════════════ -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" id="nav-map" onclick="switchScreen('map', this)"><div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg></div>Map</button>
-    <button class="nav-item" id="nav-countries" onclick="switchScreen('countries', this)"><div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>Countries</button>
-    <button class="nav-item" id="nav-roadmap" onclick="switchScreen('roadmap', this)"><div class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>Roadmap</button>
-    <button class="nav-item" id="nav-profile" onclick="switchScreen('profile', this)"><div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>Profile</button>
+ 
+  <!-- NAV -->
+  <nav class="bnav">
+    <button class="ni active" id="nm" onclick="sw('m',this)"><div class="ni-ico"><svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>Map</button>
+    <button class="ni" id="nc" onclick="sw('co',this)"><div class="ni-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>Countries</button>
+    <button class="ni" id="nr" onclick="sw('rm',this)"><div class="ni-ico"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>Roadmap</button>
+    <button class="ni" id="np2" onclick="sw('pr',this)"><div class="ni-ico"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>Profile</button>
   </nav>
 </div>
-
-<!-- ═══ TRIP MODAL ═══════════════════════════════════════════ -->
-<div class="overlay" id="sheet-trip" onclick="if(event.target===this)closeModal('sheet-trip')">
-  <div class="sheet">
-    <button class="btn-close-sheet" onclick="closeModal('sheet-trip')">✕</button>
-    <div class="sheet-handle"></div>
-    
-    <div class="sheet-content">
-      <div class="form-title" id="fm-title">Log Trip</div>
-      
-      <div class="form-group">
-        <label class="form-label">Destination Country</label>
-        <input type="text" class="custom-search-input" id="fm-country-input" placeholder="Type to search country..." autocomplete="off">
-        <div class="dropdown-list" id="fm-country-list"></div>
+ 
+<!-- TRIP MODAL -->
+<div class="ov" id="ov-trip" onclick="if(event.target===this)cm('ov-trip')">
+  <div class="sht">
+    <div class="shd"></div>
+    <div class="shsc">
+      <div class="shtp"><div class="shtitle" id="tmt">Log Trip</div><button class="bcl" onclick="cm('ov-trip')">✕</button></div>
+      <div class="tsel" id="tsel">
+        <button class="tbtn active" id="tb-trip" onclick="setT('trip')"><span class="tbi">🌍</span>Full Trip</button>
+        <button class="tbtn" id="tb-quick" onclick="setT('quick')"><span class="tbi">✈️</span>Quick Mark</button>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">Purpose / Concept</label>
-        <div style="position:relative;">
-          <select class="select-dark" id="fm-purpose"></select>
-          <span style="position:absolute; right:16px; top:15px; pointer-events:none; color:#666;">▼</span>
+      <!-- TRIP FORM -->
+      <div id="tf">
+        <div class="fg acw">
+          <label class="fl">Destination Country</label>
+          <input class="fi" id="fci" placeholder="Type to search…" autocomplete="off" oninput="acs(this.value)"/>
+          <div class="acl" id="acl"></div>
+        </div>
+        <div class="fr2">
+          <div class="fg"><label class="fl">Purpose</label><select class="fs" id="fpur"></select></div>
+          <div class="fg"><label class="fl">Transport</label><select class="fs" id="ftr"><option>✈️ Plane</option><option>🚆 Train</option><option>🚗 Car</option><option>🚢 Ship</option><option>🏍 Motorbike</option><option>🚶 On foot</option></select></div>
+        </div>
+        <hr class="dv"/>
+        <div style="font-family:var(--fh);font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--t2);text-transform:uppercase;margin-bottom:14px">Stops &amp; Stays</div>
+        <div id="scon"></div>
+        <button class="bast" onclick="addStop()">+ Add City / Stop</button>
+        <div class="fg"><label class="fl">Notes (optional)</label><textarea class="fta" id="fnotes" placeholder="What you'll remember…"></textarea></div>
+        <div class="sact">
+          <button class="bg bd" id="bdel" style="display:none" onclick="delTrip()">Delete</button>
+          <button class="bp" onclick="saveTrip()">Save Trip</button>
         </div>
       </div>
-      
-      <div class="form-group">
-        <label class="form-label">Transport</label>
-        <div style="position:relative;">
-          <select class="select-dark" id="fm-trans">
-            <option value="✈️ Plane">✈️ Plane</option><option value="🚆 Train">🚆 Train</option>
-            <option value="🚗 Car">🚗 Car</option><option value="🚢 Ship">🚢 Ship</option>
-          </select>
-          <span style="position:absolute; right:16px; top:15px; pointer-events:none; color:#666;">▼</span>
+      <!-- QUICK FORM -->
+      <div id="qf" style="display:none">
+        <div class="fg acw">
+          <label class="fl">Country</label>
+          <input class="fi" id="qfci" placeholder="Type to search…" autocomplete="off" oninput="acsq(this.value)"/>
+          <div class="acl" id="qacl"></div>
         </div>
-      </div>
-
-      <hr style="border:none; border-top:1px dashed #333; margin:24px 0;">
-      <h3 style="font-size:16px; font-weight:600; color:#e8e4de; margin-bottom:16px;">Stops & Stays</h3>
-
-      <div id="stops-container"></div>
-      <button class="btn-add-stop" onclick="addStop()">+ Add City / Stop</button>
-
-      <div class="form-group">
-        <label class="form-label">General Notes (Optional)</label>
-        <textarea class="input-solid" id="fm-notes" placeholder="Memories..."></textarea>
-      </div>
-
-      <div style="display:flex; gap:12px; margin-top:24px;">
-        <button class="btn-primary" style="background:#2a0a0a; color:#ff5555; display:none; flex:1;" id="fm-btn-del" onclick="deleteCurrentTrip()">Delete</button>
-        <button class="btn-primary" style="flex:2;" onclick="saveTrip()">Save Trip</button>
+        <div class="fg"><label class="fl">Year visited</label><input class="fi" type="number" id="qyr" placeholder="2024" min="1920" max="2030"/></div>
+        <div class="sact">
+          <button class="bg" onclick="cm('ov-trip')">Cancel</button>
+          <button class="bp" onclick="saveQ()">Mark Visited</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
-<!-- ═══ COUNTRY DETAILS MODAL ════════════════════════════════ -->
-<div class="overlay" id="sheet-country" onclick="if(event.target===this)closeModal('sheet-country')">
-  <div class="sheet" style="height: auto;">
-    <button class="btn-close-sheet" onclick="closeModal('sheet-country')">✕</button>
-    <div class="sheet-handle"></div>
-    <div class="sheet-content" style="padding-bottom: env(safe-area-inset-bottom);">
-      <div class="cs-header">
-        <div class="cs-flag" id="cs-flag">🌍</div>
-        <div class="cs-name" id="cs-name">Country Name</div>
-      </div>
-      
-      <div id="cs-history-container"></div>
-
-      <button class="btn-primary" id="cs-btn-add">Log New Visit Here</button>
+ 
+<!-- COUNTRY DETAIL MODAL -->
+<div class="ov" id="ov-cd" onclick="if(event.target===this)cm('ov-cd')">
+  <div class="sht" style="max-height:80dvh">
+    <div class="shd"></div>
+    <div class="shsc">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px"><button class="bcl" onclick="cm('ov-cd')">✕</button></div>
+      <div class="csfb" id="cdf"></div>
+      <div class="csnb" id="cdn"></div>
+      <div id="cdb"></div>
+      <button class="bp" style="width:100%;margin-top:8px" id="cdlogbtn">Log New Visit Here</button>
     </div>
   </div>
 </div>
-
+ 
 <script>
-// ─── 1. DATA CONSTANTS (FULL 195 COUNTRIES) ─────────────────
-const TOTAL_COUNTRIES = 195;
-const COUNTRIES = [
-  {code:'AF',name:'Afghanistan',flag:'🇦🇫',region:'Asia'},{code:'AL',name:'Albania',flag:'🇦🇱',region:'Europe'},{code:'DZ',name:'Algeria',flag:'🇩🇿',region:'Africa'},{code:'AD',name:'Andorra',flag:'🇦🇩',region:'Europe'},{code:'AO',name:'Angola',flag:'🇦🇴',region:'Africa'},{code:'AG',name:'Antigua & Barbuda',flag:'🇦🇬',region:'Americas'},{code:'AR',name:'Argentina',flag:'🇦🇷',region:'Americas'},{code:'AM',name:'Armenia',flag:'🇦🇲',region:'Asia'},{code:'AU',name:'Australia',flag:'🇦🇺',region:'Oceania'},{code:'AT',name:'Austria',flag:'🇦🇹',region:'Europe'},{code:'AZ',name:'Azerbaijan',flag:'🇦🇿',region:'Asia'},{code:'BS',name:'Bahamas',flag:'🇧🇸',region:'Americas'},{code:'BH',name:'Bahrain',flag:'🇧🇭',region:'Middle East'},{code:'BD',name:'Bangladesh',flag:'🇧🇩',region:'Asia'},{code:'BB',name:'Barbados',flag:'🇧🇧',region:'Americas'},{code:'BY',name:'Belarus',flag:'🇧🇾',region:'Europe'},{code:'BE',name:'Belgium',flag:'🇧🇪',region:'Europe'},{code:'BZ',name:'Belize',flag:'🇧🇿',region:'Americas'},{code:'BJ',name:'Benin',flag:'🇧🇯',region:'Africa'},{code:'BT',name:'Bhutan',flag:'🇧🇹',region:'Asia'},{code:'BO',name:'Bolivia',flag:'🇧🇴',region:'Americas'},{code:'BA',name:'Bosnia & Herzegovina',flag:'🇧🇦',region:'Europe'},{code:'BW',name:'Botswana',flag:'🇧🇼',region:'Africa'},{code:'BR',name:'Brazil',flag:'🇧🇷',region:'Americas'},{code:'BN',name:'Brunei',flag:'🇧🇳',region:'Asia'},{code:'BG',name:'Bulgaria',flag:'🇧🇬',region:'Europe'},{code:'BF',name:'Burkina Faso',flag:'🇧🇫',region:'Africa'},{code:'BI',name:'Burundi',flag:'🇧🇮',region:'Africa'},{code:'CV',name:'Cabo Verde',flag:'🇨🇻',region:'Africa'},{code:'KH',name:'Cambodia',flag:'🇰🇭',region:'Asia'},{code:'CM',name:'Cameroon',flag:'🇨🇲',region:'Africa'},{code:'CA',name:'Canada',flag:'🇨🇦',region:'Americas'},{code:'CF',name:'Central African Republic',flag:'🇨🇫',region:'Africa'},{code:'TD',name:'Chad',flag:'🇹🇩',region:'Africa'},{code:'CL',name:'Chile',flag:'🇨🇱',region:'Americas'},{code:'CN',name:'China',flag:'🇨🇳',region:'Asia'},{code:'CO',name:'Colombia',flag:'🇨🇴',region:'Americas'},{code:'KM',name:'Comoros',flag:'🇰🇲',region:'Africa'},{code:'CG',name:'Congo',flag:'🇨🇬',region:'Africa'},{code:'CD',name:'DR Congo',flag:'🇨🇩',region:'Africa'},{code:'CR',name:'Costa Rica',flag:'🇨🇷',region:'Americas'},{code:'HR',name:'Croatia',flag:'🇭🇷',region:'Europe'},{code:'CU',name:'Cuba',flag:'🇨🇺',region:'Americas'},{code:'CY',name:'Cyprus',flag:'🇨🇾',region:'Europe'},{code:'CZ',name:'Czechia',flag:'🇨🇿',region:'Europe'},{code:'DK',name:'Denmark',flag:'🇩🇰',region:'Europe'},{code:'DJ',name:'Djibouti',flag:'🇩🇯',region:'Africa'},{code:'DM',name:'Dominica',flag:'🇩🇲',region:'Americas'},{code:'DO',name:'Dominican Republic',flag:'🇩🇴',region:'Americas'},{code:'EC',name:'Ecuador',flag:'🇪🇨',region:'Americas'},{code:'EG',name:'Egypt',flag:'🇪🇬',region:'Middle East'},{code:'SV',name:'El Salvador',flag:'🇸🇻',region:'Americas'},{code:'GQ',name:'Equatorial Guinea',flag:'🇬🇶',region:'Africa'},{code:'ER',name:'Eritrea',flag:'🇪🇷',region:'Africa'},{code:'EE',name:'Estonia',flag:'🇪🇪',region:'Europe'},{code:'SZ',name:'Eswatini',flag:'🇸🇿',region:'Africa'},{code:'ET',name:'Ethiopia',flag:'🇪🇹',region:'Africa'},{code:'FJ',name:'Fiji',flag:'🇫🇯',region:'Oceania'},{code:'FI',name:'Finland',flag:'🇫🇮',region:'Europe'},{code:'FR',name:'France',flag:'🇫🇷',region:'Europe'},{code:'GA',name:'Gabon',flag:'🇬🇦',region:'Africa'},{code:'GM',name:'Gambia',flag:'🇬🇲',region:'Africa'},{code:'GE',name:'Georgia',flag:'🇬🇪',region:'Asia'},{code:'DE',name:'Germany',flag:'🇩🇪',region:'Europe'},{code:'GH',name:'Ghana',flag:'🇬🇭',region:'Africa'},{code:'GR',name:'Greece',flag:'🇬🇷',region:'Europe'},{code:'GD',name:'Grenada',flag:'🇬🇩',region:'Americas'},{code:'GT',name:'Guatemala',flag:'🇬🇹',region:'Americas'},{code:'GN',name:'Guinea',flag:'🇬🇳',region:'Africa'},{code:'GW',name:'Guinea-Bissau',flag:'🇬🇼',region:'Africa'},{code:'GY',name:'Guyana',flag:'🇬🇾',region:'Americas'},{code:'HT',name:'Haiti',flag:'🇭🇹',region:'Americas'},{code:'HN',name:'Honduras',flag:'🇭🇳',region:'Americas'},{code:'HU',name:'Hungary',flag:'🇭🇺',region:'Europe'},{code:'IS',name:'Iceland',flag:'🇮🇸',region:'Europe'},{code:'IN',name:'India',flag:'🇮🇳',region:'Asia'},{code:'ID',name:'Indonesia',flag:'🇮🇩',region:'Asia'},{code:'IR',name:'Iran',flag:'🇮🇷',region:'Middle East'},{code:'IQ',name:'Iraq',flag:'🇮🇶',region:'Middle East'},{code:'IE',name:'Ireland',flag:'🇮🇪',region:'Europe'},{code:'IL',name:'Israel',flag:'🇮🇱',region:'Middle East'},{code:'IT',name:'Italy',flag:'🇮🇹',region:'Europe'},{code:'JM',name:'Jamaica',flag:'🇯🇲',region:'Americas'},{code:'JP',name:'Japan',flag:'🇯🇵',region:'Asia'},{code:'JO',name:'Jordan',flag:'🇯🇴',region:'Middle East'},{code:'KZ',name:'Kazakhstan',flag:'🇰🇿',region:'Asia'},{code:'KE',name:'Kenya',flag:'🇰🇪',region:'Africa'},{code:'KI',name:'Kiribati',flag:'🇰🇮',region:'Oceania'},{code:'KW',name:'Kuwait',flag:'🇰🇼',region:'Middle East'},{code:'KG',name:'Kyrgyzstan',flag:'🇰🇬',region:'Asia'},{code:'LA',name:'Laos',flag:'🇱🇦',region:'Asia'},{code:'LV',name:'Latvia',flag:'🇱🇻',region:'Europe'},{code:'LB',name:'Lebanon',flag:'🇱🇧',region:'Middle East'},{code:'LS',name:'Lesotho',flag:'🇱🇸',region:'Africa'},{code:'LR',name:'Liberia',flag:'🇱🇷',region:'Africa'},{code:'LY',name:'Libya',flag:'🇱🇾',region:'Africa'},{code:'LI',name:'Liechtenstein',flag:'🇱🇮',region:'Europe'},{code:'LT',name:'Lithuania',flag:'🇱🇹',region:'Europe'},{code:'LU',name:'Luxembourg',flag:'🇱🇺',region:'Europe'},{code:'MG',name:'Madagascar',flag:'🇲🇬',region:'Africa'},{code:'MW',name:'Malawi',flag:'🇲🇼',region:'Africa'},{code:'MY',name:'Malaysia',flag:'🇲🇾',region:'Asia'},{code:'MV',name:'Maldives',flag:'🇲🇻',region:'Asia'},{code:'ML',name:'Mali',flag:'🇲🇱',region:'Africa'},{code:'MT',name:'Malta',flag:'🇲🇹',region:'Europe'},{code:'MH',name:'Marshall Islands',flag:'🇲🇭',region:'Oceania'},{code:'MR',name:'Mauritania',flag:'🇲🇷',region:'Africa'},{code:'MU',name:'Mauritius',flag:'🇲🇺',region:'Africa'},{code:'MX',name:'Mexico',flag:'🇲🇽',region:'Americas'},{code:'FM',name:'Micronesia',flag:'🇫🇲',region:'Oceania'},{code:'MD',name:'Moldova',flag:'🇲🇩',region:'Europe'},{code:'MC',name:'Monaco',flag:'🇲🇨',region:'Europe'},{code:'MN',name:'Mongolia',flag:'🇲🇳',region:'Asia'},{code:'ME',name:'Montenegro',flag:'🇲🇪',region:'Europe'},{code:'MA',name:'Morocco',flag:'🇲🇦',region:'Africa'},{code:'MZ',name:'Mozambique',flag:'🇲🇿',region:'Africa'},{code:'MM',name:'Myanmar',flag:'🇲🇲',region:'Asia'},{code:'NA',name:'Namibia',flag:'🇳🇦',region:'Africa'},{code:'NR',name:'Nauru',flag:'🇳🇷',region:'Oceania'},{code:'NP',name:'Nepal',flag:'🇳🇵',region:'Asia'},{code:'NL',name:'Netherlands',flag:'🇳🇱',region:'Europe'},{code:'NZ',name:'New Zealand',flag:'🇳🇿',region:'Oceania'},{code:'NI',name:'Nicaragua',flag:'🇳🇮',region:'Americas'},{code:'NE',name:'Niger',flag:'🇳🇪',region:'Africa'},{code:'NG',name:'Nigeria',flag:'🇳🇬',region:'Africa'},{code:'KP',name:'North Korea',flag:'🇰🇵',region:'Asia'},{code:'MK',name:'North Macedonia',flag:'🇲🇰',region:'Europe'},{code:'NO',name:'Norway',flag:'🇳🇴',region:'Europe'},{code:'OM',name:'Oman',flag:'🇴🇲',region:'Middle East'},{code:'PK',name:'Pakistan',flag:'🇵🇰',region:'Asia'},{code:'PW',name:'Palau',flag:'🇵🇼',region:'Oceania'},{code:'PA',name:'Panama',flag:'🇵🇦',region:'Americas'},{code:'PG',name:'Papua New Guinea',flag:'🇵🇬',region:'Oceania'},{code:'PY',name:'Paraguay',flag:'🇵🇾',region:'Americas'},{code:'PE',name:'Peru',flag:'🇵🇪',region:'Americas'},{code:'PH',name:'Philippines',flag:'🇵🇭',region:'Asia'},{code:'PL',name:'Poland',flag:'🇵🇱',region:'Europe'},{code:'PT',name:'Portugal',flag:'🇵🇹',region:'Europe'},{code:'QA',name:'Qatar',flag:'🇶🇦',region:'Middle East'},{code:'RO',name:'Romania',flag:'🇷🇴',region:'Europe'},{code:'RU',name:'Russia',flag:'🇷🇺',region:'Europe'},{code:'RW',name:'Rwanda',flag:'🇷🇼',region:'Africa'},{code:'KN',name:'Saint Kitts & Nevis',flag:'🇰🇳',region:'Americas'},{code:'LC',name:'Saint Lucia',flag:'🇱🇨',region:'Americas'},{code:'VC',name:'St. Vincent & Grenadines',flag:'🇻🇨',region:'Americas'},{code:'WS',name:'Samoa',flag:'🇼🇸',region:'Oceania'},{code:'SM',name:'San Marino',flag:'🇸🇲',region:'Europe'},{code:'ST',name:'Sao Tome & Principe',flag:'🇸🇹',region:'Africa'},{code:'SA',name:'Saudi Arabia',flag:'🇸🇦',region:'Middle East'},{code:'SN',name:'Senegal',flag:'🇸🇳',region:'Africa'},{code:'RS',name:'Serbia',flag:'🇷🇸',region:'Europe'},{code:'SC',name:'Seychelles',flag:'🇸🇨',region:'Africa'},{code:'SL',name:'Sierra Leone',flag:'🇸🇱',region:'Africa'},{code:'SG',name:'Singapore',flag:'🇸🇬',region:'Asia'},{code:'SK',name:'Slovakia',flag:'🇸🇰',region:'Europe'},{code:'SI',name:'Slovenia',flag:'🇸🇮',region:'Europe'},{code:'SB',name:'Solomon Islands',flag:'🇸🇧',region:'Oceania'},{code:'SO',name:'Somalia',flag:'🇸🇴',region:'Africa'},{code:'ZA',name:'South Africa',flag:'🇿🇦',region:'Africa'},{code:'KR',name:'South Korea',flag:'🇰🇷',region:'Asia'},{code:'SS',name:'South Sudan',flag:'🇸🇸',region:'Africa'},{code:'ES',name:'Spain',flag:'🇪🇸',region:'Europe'},{code:'LK',name:'Sri Lanka',flag:'🇱🇰',region:'Asia'},{code:'SD',name:'Sudan',flag:'🇸🇩',region:'Africa'},{code:'SR',name:'Suriname',flag:'🇸🇷',region:'Americas'},{code:'SE',name:'Sweden',flag:'🇸🇪',region:'Europe'},{code:'CH',name:'Switzerland',flag:'🇨🇭',region:'Europe'},{code:'SY',name:'Syria',flag:'🇸🇾',region:'Middle East'},{code:'TW',name:'Taiwan',flag:'🇹🇼',region:'Asia'},{code:'TJ',name:'Tajikistan',flag:'🇹🇯',region:'Asia'},{code:'TZ',name:'Tanzania',flag:'🇹🇿',region:'Africa'},{code:'TH',name:'Thailand',flag:'🇹🇭',region:'Asia'},{code:'TL',name:'Timor-Leste',flag:'🇹🇱',region:'Asia'},{code:'TG',name:'Togo',flag:'🇹🇬',region:'Africa'},{code:'TO',name:'Tonga',flag:'🇹🇴',region:'Oceania'},{code:'TT',name:'Trinidad & Tobago',flag:'🇹🇹',region:'Americas'},{code:'TN',name:'Tunisia',flag:'🇹🇳',region:'Africa'},{code:'TR',name:'Turkey',flag:'🇹🇷',region:'Europe'},{code:'TM',name:'Turkmenistan',flag:'🇹🇲',region:'Asia'},{code:'TV',name:'Tuvalu',flag:'🇹🇻',region:'Oceania'},{code:'UG',name:'Uganda',flag:'🇺🇬',region:'Africa'},{code:'UA',name:'Ukraine',flag:'🇺🇦',region:'Europe'},{code:'AE',name:'United Arab Emirates',flag:'🇦🇪',region:'Middle East'},{code:'GB',name:'United Kingdom',flag:'🇬🇧',region:'Europe'},{code:'US',name:'United States',flag:'🇺🇸',region:'Americas'},{code:'UY',name:'Uruguay',flag:'🇺🇾',region:'Americas'},{code:'UZ',name:'Uzbekistan',flag:'🇺🇿',region:'Asia'},{code:'VU',name:'Vanuatu',flag:'🇻🇺',region:'Oceania'},{code:'VA',name:'Vatican City',flag:'🇻🇦',region:'Europe'},{code:'VE',name:'Venezuela',flag:'🇻🇪',region:'Americas'},{code:'VN',name:'Vietnam',flag:'🇻🇳',region:'Asia'},{code:'YE',name:'Yemen',flag:'🇾🇪',region:'Middle East'},{code:'ZM',name:'Zambia',flag:'🇿🇲',region:'Africa'},{code:'ZW',name:'Zimbabwe',flag:'🇿🇼',region:'Africa'}
-].sort((a,b) => a.name.localeCompare(b.name));
-
-const REGIONS = ['All', 'Europe', 'Americas', 'Asia', 'Africa', 'Middle East', 'Oceania'];
-
-const numToA2 = { 4:'AF',8:'AL',12:'DZ',24:'AO',32:'AR',36:'AU',40:'AT',44:'BS',48:'BH',50:'BD',52:'BB',112:'BY',56:'BE',84:'BZ',204:'BJ',64:'BT',68:'BO',70:'BA',72:'BW',76:'BR',96:'BN',100:'BG',854:'BF',108:'BI',132:'CV',116:'KH',120:'CM',124:'CA',140:'CF',148:'TD',152:'CL',156:'CN',170:'CO',174:'KM',178:'CG',180:'CD',188:'CR',191:'HR',192:'CU',196:'CY',203:'CZ',208:'DK',262:'DJ',214:'DO',218:'EC',818:'EG',222:'SV',226:'GQ',232:'ER',233:'EE',748:'SZ',231:'ET',242:'FJ',246:'FI',250:'FR',266:'GA',270:'GM',268:'GE',276:'DE',288:'GH',300:'GR',320:'GT',324:'GN',328:'GY',332:'HT',340:'HN',348:'HU',352:'IS',356:'IN',360:'ID',364:'IR',368:'IQ',372:'IE',376:'IL',380:'IT',388:'JM',392:'JP',400:'JO',398:'KZ',404:'KE',414:'KW',417:'KG',418:'LA',428:'LV',422:'LB',426:'LS',430:'LR',434:'LY',438:'LI',440:'LT',442:'LU',450:'MG',454:'MW',458:'MY',462:'MV',466:'ML',470:'MT',478:'MR',480:'MU',484:'MX',498:'MD',496:'MN',499:'ME',504:'MA',508:'MZ',104:'MM',516:'NA',524:'NP',528:'NL',554:'NZ',558:'NI',562:'NE',566:'NG',408:'KP',807:'MK',578:'NO',512:'OM',586:'PK',591:'PA',598:'PG',600:'PY',604:'PE',608:'PH',616:'PL',620:'PT',634:'QA',642:'RO',643:'RU',646:'RW',682:'SA',686:'SN',688:'RS',694:'SL',702:'SG',703:'SK',705:'SI',90:'SB',706:'SO',710:'ZA',410:'KR',728:'SS',724:'ES',144:'LK',729:'SD',740:'SR',748:'SZ',752:'SE',756:'CH',760:'SY',158:'TW',762:'TJ',834:'TZ',764:'TH',626:'TL',768:'TG',780:'TT',788:'TN',792:'TR',795:'TM',800:'UG',804:'UA',784:'AE',826:'GB',840:'US',858:'UY',860:'UZ',862:'VE',704:'VN',887:'YE',894:'ZM',716:'ZW' };
-
-const SUB_REGIONS = {
-  'US': ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'],
-  'ES': ['Andalucía','Aragón','Asturias','Baleares','Canarias','Cantabria','Castilla-La Mancha','Castilla y León','Cataluña','Comunidad Valenciana','Extremadura','Galicia','Madrid','Murcia','Navarra','País Vasco','La Rioja','Ceuta','Melilla'],
-  'JP': ['Hokkaido','Aomori','Iwate','Miyagi','Akita','Yamagata','Fukushima','Ibaraki','Tochigi','Gunma','Saitama','Chiba','Tokyo','Kanagawa','Niigata','Toyama','Ishikawa','Fukui','Yamanashi','Nagano','Gifu','Shizuoka','Aichi','Mie','Shiga','Kyoto','Osaka','Hyogo','Nara','Wakayama','Tottori','Shimane','Okayama','Hiroshima','Yamaguchi','Tokushima','Kagawa','Ehime','Kochi','Fukuoka','Saga','Nagasaki','Kumamoto','Oita','Miyazaki','Kagoshima','Okinawa'],
-  'CA': ['Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Ontario','Prince Edward Island','Quebec','Saskatchewan','Northwest Territories','Nunavut','Yukon'],
-  'AU': ['New South Wales','Victoria','Queensland','Western Australia','South Australia','Tasmania','Australian Capital Territory','Northern Territory'],
-  'MX': ['Aguascalientes','Baja California','Baja California Sur','Campeche','Chiapas','Chihuahua','Ciudad de México','Coahuila','Colima','Durango','Guanajuato','Guerrero','Hidalgo','Jalisco','México (Estado)','Michoacán','Morelos','Nayarit','Nuevo León','Oaxaca','Puebla','Querétaro','Quintana Roo','San Luis Potosí','Sinaloa','Sonora','Tabasco','Tamaulipas','Tlaxcala','Veracruz','Yucatán','Zacatecas'],
-  'DE': ['Baden-Württemberg','Bayern (Bavaria)','Berlin','Brandenburg','Bremen','Hamburg','Hessen','Mecklenburg-Vorpommern','Niedersachsen (Lower Saxony)','Nordrhein-Westfalen','Rheinland-Pfalz','Saarland','Sachsen (Saxony)','Sachsen-Anhalt','Schleswig-Holstein','Thüringen'],
-  'IT': ['Abruzzo','Aosta Valley','Apulia (Puglia)','Basilicata','Calabria','Campania','Emilia-Romagna','Friuli Venezia Giulia','Lazio','Liguria','Lombardy','Marche','Molise','Piedmont','Sardinia','Sicily','Trentino-South Tyrol','Tuscany','Umbria','Veneto'],
-  'FR': ['Auvergne-Rhône-Alpes','Bourgogne-Franche-Comté','Brittany','Centre-Val de Loire','Corsica','Grand Est','Hauts-de-France','Île-de-France','Normandy','Nouvelle-Aquitaine','Occitanie','Pays de la Loire','Provence-Alpes-Côte d\'Azur','Guadeloupe','Martinique','Guyane','La Réunion','Mayotte'],
-  'GB': ['England','Scotland','Wales','Northern Ireland'],
-  'BR': ['Acre','Alagoas','Amapá','Amazonas','Bahia','Ceará','Distrito Federal','Espírito Santo','Goiás','Maranhão','Mato Grosso','Mato Grosso do Sul','Minas Gerais','Pará','Paraíba','Paraná','Pernambuco','Piauí','Rio de Janeiro','Rio Grande do Norte','Rio Grande do Sul','Rondônia','Roraima','Santa Catarina','São Paulo','Sergipe','Tocantins'],
-  'AR': ['Buenos Aires (Provincia)','CABA (Ciudad Autónoma)','Catamarca','Chaco','Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja','Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis','Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'],
-  'IN': ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Andaman and Nicobar','Chandigarh','Delhi','Jammu and Kashmir','Ladakh'],
-  'CN': ['Anhui','Fujian','Gansu','Guangdong','Guizhou','Hainan','Hebei','Heilongjiang','Henan','Hubei','Hunan','Jiangsu','Jiangxi','Jilin','Liaoning','Qinghai','Shaanxi','Shandong','Shanxi','Sichuan','Yunnan','Zhejiang','Guangxi','Inner Mongolia','Ningxia','Tibet','Xinjiang','Beijing','Chongqing','Shanghai','Tianjin','Hong Kong','Macau']
-};
-
-// ─── 2. APP STATE ───────────────────────────────────────────
-let state = {
-  trips: [], 
-  purposes: ['Leisure', 'Work', 'Studies', 'Other'],
-  airtable: { token: '', base: '', connected: false }
-};
-
-let currentEditId = null;
-let currentFilterRegion = 'All';
-let selectedCountryCode = null; 
-let stopsData = []; 
-let mapSvg, mapG, pathGen, zoom;
-
-// ─── 3. INIT & CORE LOGIC ───────────────────────────────────
-function init() {
-  const data = localStorage.getItem('nisho_god_v2');
-  if(data) state = { ...state, ...JSON.parse(data) };
-
-  renderRegionTabs();
-  renderPurposesSettings();
-  updateDashboard();
-  renderCountriesList();
-  renderRoadmap();
-  initMap();
-  setupCountrySearch();
-
-  if(state.airtable.connected) {
-    document.getElementById('at-token').value = state.airtable.token;
-    document.getElementById('at-base').value = state.airtable.base;
-  }
+// ── DATA ──
+const TOT=195;
+const CC=[
+  {c:'AF',n:'Afghanistan',f:'🇦🇫',r:'Asia'},{c:'AL',n:'Albania',f:'🇦🇱',r:'Europe'},{c:'DZ',n:'Algeria',f:'🇩🇿',r:'Africa'},{c:'AD',n:'Andorra',f:'🇦🇩',r:'Europe'},{c:'AO',n:'Angola',f:'🇦🇴',r:'Africa'},{c:'AG',n:'Antigua & Barbuda',f:'🇦🇬',r:'Americas'},{c:'AR',n:'Argentina',f:'🇦🇷',r:'Americas'},{c:'AM',n:'Armenia',f:'🇦🇲',r:'Asia'},{c:'AU',n:'Australia',f:'🇦🇺',r:'Oceania'},{c:'AT',n:'Austria',f:'🇦🇹',r:'Europe'},{c:'AZ',n:'Azerbaijan',f:'🇦🇿',r:'Asia'},{c:'BS',n:'Bahamas',f:'🇧🇸',r:'Americas'},{c:'BH',n:'Bahrain',f:'🇧🇭',r:'Middle East'},{c:'BD',n:'Bangladesh',f:'🇧🇩',r:'Asia'},{c:'BB',n:'Barbados',f:'🇧🇧',r:'Americas'},{c:'BY',n:'Belarus',f:'🇧🇾',r:'Europe'},{c:'BE',n:'Belgium',f:'🇧🇪',r:'Europe'},{c:'BZ',n:'Belize',f:'🇧🇿',r:'Americas'},{c:'BJ',n:'Benin',f:'🇧🇯',r:'Africa'},{c:'BT',n:'Bhutan',f:'🇧🇹',r:'Asia'},{c:'BO',n:'Bolivia',f:'🇧🇴',r:'Americas'},{c:'BA',n:'Bosnia & Herzegovina',f:'🇧🇦',r:'Europe'},{c:'BW',n:'Botswana',f:'🇧🇼',r:'Africa'},{c:'BR',n:'Brazil',f:'🇧🇷',r:'Americas'},{c:'BN',n:'Brunei',f:'🇧🇳',r:'Asia'},{c:'BG',n:'Bulgaria',f:'🇧🇬',r:'Europe'},{c:'BF',n:'Burkina Faso',f:'🇧🇫',r:'Africa'},{c:'BI',n:'Burundi',f:'🇧🇮',r:'Africa'},{c:'CV',n:'Cabo Verde',f:'🇨🇻',r:'Africa'},{c:'KH',n:'Cambodia',f:'🇰🇭',r:'Asia'},{c:'CM',n:'Cameroon',f:'🇨🇲',r:'Africa'},{c:'CA',n:'Canada',f:'🇨🇦',r:'Americas'},{c:'CF',n:'Central African Republic',f:'🇨🇫',r:'Africa'},{c:'TD',n:'Chad',f:'🇹🇩',r:'Africa'},{c:'CL',n:'Chile',f:'🇨🇱',r:'Americas'},{c:'CN',n:'China',f:'🇨🇳',r:'Asia'},{c:'CO',n:'Colombia',f:'🇨🇴',r:'Americas'},{c:'KM',n:'Comoros',f:'🇰🇲',r:'Africa'},{c:'CG',n:'Congo',f:'🇨🇬',r:'Africa'},{c:'CD',n:'DR Congo',f:'🇨🇩',r:'Africa'},{c:'CR',n:'Costa Rica',f:'🇨🇷',r:'Americas'},{c:'HR',n:'Croatia',f:'🇭🇷',r:'Europe'},{c:'CU',n:'Cuba',f:'🇨🇺',r:'Americas'},{c:'CY',n:'Cyprus',f:'🇨🇾',r:'Europe'},{c:'CZ',n:'Czechia',f:'🇨🇿',r:'Europe'},{c:'DK',n:'Denmark',f:'🇩🇰',r:'Europe'},{c:'DJ',n:'Djibouti',f:'🇩🇯',r:'Africa'},{c:'DM',n:'Dominica',f:'🇩🇲',r:'Americas'},{c:'DO',n:'Dominican Republic',f:'🇩🇴',r:'Americas'},{c:'EC',n:'Ecuador',f:'🇪🇨',r:'Americas'},{c:'EG',n:'Egypt',f:'🇪🇬',r:'Middle East'},{c:'SV',n:'El Salvador',f:'🇸🇻',r:'Americas'},{c:'GQ',n:'Equatorial Guinea',f:'🇬🇶',r:'Africa'},{c:'ER',n:'Eritrea',f:'🇪🇷',r:'Africa'},{c:'EE',n:'Estonia',f:'🇪🇪',r:'Europe'},{c:'SZ',n:'Eswatini',f:'🇸🇿',r:'Africa'},{c:'ET',n:'Ethiopia',f:'🇪🇹',r:'Africa'},{c:'FJ',n:'Fiji',f:'🇫🇯',r:'Oceania'},{c:'FI',n:'Finland',f:'🇫🇮',r:'Europe'},{c:'FR',n:'France',f:'🇫🇷',r:'Europe'},{c:'GA',n:'Gabon',f:'🇬🇦',r:'Africa'},{c:'GM',n:'Gambia',f:'🇬🇲',r:'Africa'},{c:'GE',n:'Georgia',f:'🇬🇪',r:'Asia'},{c:'DE',n:'Germany',f:'🇩🇪',r:'Europe'},{c:'GH',n:'Ghana',f:'🇬🇭',r:'Africa'},{c:'GR',n:'Greece',f:'🇬🇷',r:'Europe'},{c:'GD',n:'Grenada',f:'🇬🇩',r:'Americas'},{c:'GT',n:'Guatemala',f:'🇬🇹',r:'Americas'},{c:'GN',n:'Guinea',f:'🇬🇳',r:'Africa'},{c:'GW',n:'Guinea-Bissau',f:'🇬🇼',r:'Africa'},{c:'GY',n:'Guyana',f:'🇬🇾',r:'Americas'},{c:'HT',n:'Haiti',f:'🇭🇹',r:'Americas'},{c:'HN',n:'Honduras',f:'🇭🇳',r:'Americas'},{c:'HU',n:'Hungary',f:'🇭🇺',r:'Europe'},{c:'IS',n:'Iceland',f:'🇮🇸',r:'Europe'},{c:'IN',n:'India',f:'🇮🇳',r:'Asia'},{c:'ID',n:'Indonesia',f:'🇮🇩',r:'Asia'},{c:'IR',n:'Iran',f:'🇮🇷',r:'Middle East'},{c:'IQ',n:'Iraq',f:'🇮🇶',r:'Middle East'},{c:'IE',n:'Ireland',f:'🇮🇪',r:'Europe'},{c:'IL',n:'Israel',f:'🇮🇱',r:'Middle East'},{c:'IT',n:'Italy',f:'🇮🇹',r:'Europe'},{c:'JM',n:'Jamaica',f:'🇯🇲',r:'Americas'},{c:'JP',n:'Japan',f:'🇯🇵',r:'Asia'},{c:'JO',n:'Jordan',f:'🇯🇴',r:'Middle East'},{c:'KZ',n:'Kazakhstan',f:'🇰🇿',r:'Asia'},{c:'KE',n:'Kenya',f:'🇰🇪',r:'Africa'},{c:'KI',n:'Kiribati',f:'🇰🇮',r:'Oceania'},{c:'KW',n:'Kuwait',f:'🇰🇼',r:'Middle East'},{c:'KG',n:'Kyrgyzstan',f:'🇰🇬',r:'Asia'},{c:'LA',n:'Laos',f:'🇱🇦',r:'Asia'},{c:'LV',n:'Latvia',f:'🇱🇻',r:'Europe'},{c:'LB',n:'Lebanon',f:'🇱🇧',r:'Middle East'},{c:'LS',n:'Lesotho',f:'🇱🇸',r:'Africa'},{c:'LR',n:'Liberia',f:'🇱🇷',r:'Africa'},{c:'LY',n:'Libya',f:'🇱🇾',r:'Africa'},{c:'LI',n:'Liechtenstein',f:'🇱🇮',r:'Europe'},{c:'LT',n:'Lithuania',f:'🇱🇹',r:'Europe'},{c:'LU',n:'Luxembourg',f:'🇱🇺',r:'Europe'},{c:'MG',n:'Madagascar',f:'🇲🇬',r:'Africa'},{c:'MW',n:'Malawi',f:'🇲🇼',r:'Africa'},{c:'MY',n:'Malaysia',f:'🇲🇾',r:'Asia'},{c:'MV',n:'Maldives',f:'🇲🇻',r:'Asia'},{c:'ML',n:'Mali',f:'🇲🇱',r:'Africa'},{c:'MT',n:'Malta',f:'🇲🇹',r:'Europe'},{c:'MH',n:'Marshall Islands',f:'🇲🇭',r:'Oceania'},{c:'MR',n:'Mauritania',f:'🇲🇷',r:'Africa'},{c:'MU',n:'Mauritius',f:'🇲🇺',r:'Africa'},{c:'MX',n:'Mexico',f:'🇲🇽',r:'Americas'},{c:'FM',n:'Micronesia',f:'🇫🇲',r:'Oceania'},{c:'MD',n:'Moldova',f:'🇲🇩',r:'Europe'},{c:'MC',n:'Monaco',f:'🇲🇨',r:'Europe'},{c:'MN',n:'Mongolia',f:'🇲🇳',r:'Asia'},{c:'ME',n:'Montenegro',f:'🇲🇪',r:'Europe'},{c:'MA',n:'Morocco',f:'🇲🇦',r:'Africa'},{c:'MZ',n:'Mozambique',f:'🇲🇿',r:'Africa'},{c:'MM',n:'Myanmar',f:'🇲🇲',r:'Asia'},{c:'NA',n:'Namibia',f:'🇳🇦',r:'Africa'},{c:'NR',n:'Nauru',f:'🇳🇷',r:'Oceania'},{c:'NP',n:'Nepal',f:'🇳🇵',r:'Asia'},{c:'NL',n:'Netherlands',f:'🇳🇱',r:'Europe'},{c:'NZ',n:'New Zealand',f:'🇳🇿',r:'Oceania'},{c:'NI',n:'Nicaragua',f:'🇳🇮',r:'Americas'},{c:'NE',n:'Niger',f:'🇳🇪',r:'Africa'},{c:'NG',n:'Nigeria',f:'🇳🇬',r:'Africa'},{c:'KP',n:'North Korea',f:'🇰🇵',r:'Asia'},{c:'MK',n:'North Macedonia',f:'🇲🇰',r:'Europe'},{c:'NO',n:'Norway',f:'🇳🇴',r:'Europe'},{c:'OM',n:'Oman',f:'🇴🇲',r:'Middle East'},{c:'PK',n:'Pakistan',f:'🇵🇰',r:'Asia'},{c:'PW',n:'Palau',f:'🇵🇼',r:'Oceania'},{c:'PA',n:'Panama',f:'🇵🇦',r:'Americas'},{c:'PG',n:'Papua New Guinea',f:'🇵🇬',r:'Oceania'},{c:'PY',n:'Paraguay',f:'🇵🇾',r:'Americas'},{c:'PE',n:'Peru',f:'🇵🇪',r:'Americas'},{c:'PH',n:'Philippines',f:'🇵🇭',r:'Asia'},{c:'PL',n:'Poland',f:'🇵🇱',r:'Europe'},{c:'PT',n:'Portugal',f:'🇵🇹',r:'Europe'},{c:'QA',n:'Qatar',f:'🇶🇦',r:'Middle East'},{c:'RO',n:'Romania',f:'🇷🇴',r:'Europe'},{c:'RU',n:'Russia',f:'🇷🇺',r:'Europe'},{c:'RW',n:'Rwanda',f:'🇷🇼',r:'Africa'},{c:'KN',n:'Saint Kitts & Nevis',f:'🇰🇳',r:'Americas'},{c:'LC',n:'Saint Lucia',f:'🇱🇨',r:'Americas'},{c:'VC',n:'St. Vincent & Grenadines',f:'🇻🇨',r:'Americas'},{c:'WS',n:'Samoa',f:'🇼🇸',r:'Oceania'},{c:'SM',n:'San Marino',f:'🇸🇲',r:'Europe'},{c:'ST',n:'Sao Tome & Principe',f:'🇸🇹',r:'Africa'},{c:'SA',n:'Saudi Arabia',f:'🇸🇦',r:'Middle East'},{c:'SN',n:'Senegal',f:'🇸🇳',r:'Africa'},{c:'RS',n:'Serbia',f:'🇷🇸',r:'Europe'},{c:'SC',n:'Seychelles',f:'🇸🇨',r:'Africa'},{c:'SL',n:'Sierra Leone',f:'🇸🇱',r:'Africa'},{c:'SG',n:'Singapore',f:'🇸🇬',r:'Asia'},{c:'SK',n:'Slovakia',f:'🇸🇰',r:'Europe'},{c:'SI',n:'Slovenia',f:'🇸🇮',r:'Europe'},{c:'SB',n:'Solomon Islands',f:'🇸🇧',r:'Oceania'},{c:'SO',n:'Somalia',f:'🇸🇴',r:'Africa'},{c:'ZA',n:'South Africa',f:'🇿🇦',r:'Africa'},{c:'KR',n:'South Korea',f:'🇰🇷',r:'Asia'},{c:'SS',n:'South Sudan',f:'🇸🇸',r:'Africa'},{c:'ES',n:'Spain',f:'🇪🇸',r:'Europe'},{c:'LK',n:'Sri Lanka',f:'🇱🇰',r:'Asia'},{c:'SD',n:'Sudan',f:'🇸🇩',r:'Africa'},{c:'SR',n:'Suriname',f:'🇸🇷',r:'Americas'},{c:'SE',n:'Sweden',f:'🇸🇪',r:'Europe'},{c:'CH',n:'Switzerland',f:'🇨🇭',r:'Europe'},{c:'SY',n:'Syria',f:'🇸🇾',r:'Middle East'},{c:'TW',n:'Taiwan',f:'🇹🇼',r:'Asia'},{c:'TJ',n:'Tajikistan',f:'🇹🇯',r:'Asia'},{c:'TZ',n:'Tanzania',f:'🇹🇿',r:'Africa'},{c:'TH',n:'Thailand',f:'🇹🇭',r:'Asia'},{c:'TL',n:'Timor-Leste',f:'🇹🇱',r:'Asia'},{c:'TG',n:'Togo',f:'🇹🇬',r:'Africa'},{c:'TO',n:'Tonga',f:'🇹🇴',r:'Oceania'},{c:'TT',n:'Trinidad & Tobago',f:'🇹🇹',r:'Americas'},{c:'TN',n:'Tunisia',f:'🇹🇳',r:'Africa'},{c:'TR',n:'Turkey',f:'🇹🇷',r:'Europe'},{c:'TM',n:'Turkmenistan',f:'🇹🇲',r:'Asia'},{c:'TV',n:'Tuvalu',f:'🇹🇻',r:'Oceania'},{c:'UG',n:'Uganda',f:'🇺🇬',r:'Africa'},{c:'UA',n:'Ukraine',f:'🇺🇦',r:'Europe'},{c:'AE',n:'United Arab Emirates',f:'🇦🇪',r:'Middle East'},{c:'GB',n:'United Kingdom',f:'🇬🇧',r:'Europe'},{c:'US',n:'United States',f:'🇺🇸',r:'Americas'},{c:'UY',n:'Uruguay',f:'🇺🇾',r:'Americas'},{c:'UZ',n:'Uzbekistan',f:'🇺🇿',r:'Asia'},{c:'VU',n:'Vanuatu',f:'🇻🇺',r:'Oceania'},{c:'VA',n:'Vatican City',f:'🇻🇦',r:'Europe'},{c:'VE',n:'Venezuela',f:'🇻🇪',r:'Americas'},{c:'VN',n:'Vietnam',f:'🇻🇳',r:'Asia'},{c:'YE',n:'Yemen',f:'🇾🇪',r:'Middle East'},{c:'ZM',n:'Zambia',f:'🇿🇲',r:'Africa'},{c:'ZW',n:'Zimbabwe',f:'🇿🇼',r:'Africa'}
+].sort((a,b)=>a.n.localeCompare(b.n));
+ 
+const REGS=['All','Europe','Americas','Asia','Africa','Middle East','Oceania'];
+const N2A={4:'AF',8:'AL',12:'DZ',24:'AO',32:'AR',36:'AU',40:'AT',44:'BS',48:'BH',50:'BD',52:'BB',56:'BE',64:'BT',68:'BO',70:'BA',72:'BW',76:'BR',84:'BZ',96:'BN',100:'BG',104:'MM',108:'BI',112:'BY',116:'KH',120:'CM',124:'CA',132:'CV',140:'CF',144:'LK',148:'TD',152:'CL',156:'CN',158:'TW',170:'CO',174:'KM',178:'CG',180:'CD',188:'CR',191:'HR',192:'CU',196:'CY',203:'CZ',204:'BJ',208:'DK',214:'DO',218:'EC',222:'SV',226:'GQ',231:'ET',232:'ER',233:'EE',242:'FJ',246:'FI',250:'FR',262:'DJ',266:'GA',268:'GE',270:'GM',276:'DE',288:'GH',300:'GR',320:'GT',324:'GN',328:'GY',332:'HT',340:'HN',348:'HU',352:'IS',356:'IN',360:'ID',364:'IR',368:'IQ',372:'IE',376:'IL',380:'IT',384:'CI',388:'JM',392:'JP',398:'KZ',400:'JO',404:'KE',408:'KP',410:'KR',414:'KW',417:'KG',418:'LA',422:'LB',426:'LS',428:'LV',430:'LR',434:'LY',438:'LI',440:'LT',442:'LU',450:'MG',454:'MW',458:'MY',462:'MV',466:'ML',470:'MT',478:'MR',480:'MU',484:'MX',496:'MN',498:'MD',499:'ME',504:'MA',508:'MZ',512:'OM',516:'NA',524:'NP',528:'NL',554:'NZ',558:'NI',562:'NE',566:'NG',578:'NO',586:'PK',591:'PA',598:'PG',600:'PY',604:'PE',608:'PH',616:'PL',620:'PT',626:'TL',634:'QA',642:'RO',643:'RU',646:'RW',682:'SA',686:'SN',688:'RS',694:'SL',702:'SG',703:'SK',704:'VN',705:'SI',706:'SO',710:'ZA',716:'ZW',724:'ES',728:'SS',729:'SD',740:'SR',748:'SZ',752:'SE',756:'CH',760:'SY',762:'TJ',764:'TH',768:'TG',780:'TT',784:'AE',788:'TN',792:'TR',795:'TM',800:'UG',804:'UA',807:'MK',818:'EG',826:'GB',834:'TZ',840:'US',854:'BF',858:'UY',860:'UZ',862:'VE',887:'YE',894:'ZM'};
+ 
+// ── STATE ──
+let S={trips:[],qv:{},purposes:['Leisure','Work','Studies','Wellness','Adventure'],profile:{name:'Traveler'},at:{tok:'',base:'',ct:'Countries',ht:'Hotels',ok:false}};
+let eid=null,fr='All',selC=null,qselC=null,stops=[],ttype='trip';
+let mapG,pg,zoom;
+ 
+// ── PERSIST ──
+function load(){try{const d=localStorage.getItem('nisho_v3');if(d)S=Object.assign(S,JSON.parse(d));}catch(e){}}
+function save(){localStorage.setItem('nisho_v3',JSON.stringify(S));ra();}
+ 
+// ── COMPUTED ──
+function vis(){const s=new Set(S.trips.map(t=>t.country));Object.keys(S.qv).forEach(c=>s.add(c));return s;}
+function days(){let d=0;S.trips.forEach(t=>t.stops.forEach(s=>{if(s.arr&&s.dep)d+=Math.max(0,Math.ceil((new Date(s.dep)-new Date(s.arr))/86400000));}));return d;}
+ 
+// ── REFRESH ALL ──
+function ra(){updStats();mc();renderC();renderR();updPS();renderP();}
+ 
+// ── STATS ──
+function updStats(){
+  const v=vis().size,p=((v/TOT)*100).toFixed(1),d=days(),nf=n=>n>=1000?(n/1000).toFixed(1)+'k':n;
+  document.getElementById('hdr-n').textContent=v;
+  document.getElementById('sc').textContent=v;
+  document.getElementById('sp').textContent=p+'%';
+  document.getElementById('sbf').style.width=p+'%';
+  document.getElementById('str').textContent=S.trips.length;
+  document.getElementById('sdy').textContent=nf(d);
 }
-
-function saveLocal() {
-  localStorage.setItem('nisho_god_v2', JSON.stringify(state));
-  updateDashboard();
-  renderMapColors();
-  renderCountriesList();
-  renderRoadmap();
+function updPS(){
+  const v=vis().size,p=((v/TOT)*100).toFixed(1),d=days(),nf=n=>n>=1000?(n/1000).toFixed(1)+'k':n;
+  document.getElementById('psc').textContent=v;
+  document.getElementById('psp').textContent=p+'%';
+  document.getElementById('pst').textContent=S.trips.length;
+  document.getElementById('psd').textContent=nf(d);
+  document.getElementById('pn').textContent=S.profile.name;
 }
-
-function showToast(msg, isError=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.style.background = isError ? '#ff5555' : '#b8e060'; t.style.color = isError ? '#fff' : '#000';
-  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-function updateDashboard() {
-  const visited = new Set(state.trips.map(t => t.country)).size;
-  const pct = ((visited / TOTAL_COUNTRIES) * 100).toFixed(1);
-  
-  document.getElementById('dash-countries').textContent = visited;
-  document.getElementById('dash-pct').textContent = pct + '%';
-  document.getElementById('dash-progress').style.width = pct + '%';
-  document.getElementById('dash-trips').textContent = state.trips.length;
-  
-  let days = 0;
-  state.trips.forEach(t => {
-    t.stops.forEach(s => {
-      if(s.arr && s.dep) days += Math.ceil(Math.abs(new Date(s.dep)-new Date(s.arr))/86400000);
-    });
-  });
-  document.getElementById('dash-days').textContent = days;
-}
-
-// ─── 4. MAP ─────────────────────────────────────────────────
-function initMap() {
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r=>r.json()).then(world => {
-    const geo = topojson.feature(world, world.objects.countries);
-    geo.features.forEach(f => f.properties.iso = numToA2[parseInt(f.id)]);
-    pathGen = d3.geoPath().projection(d3.geoNaturalEarth1().scale(150).translate([450,240]));
-    mapSvg = d3.select('#world-map-svg'); mapG = mapSvg.append('g');
-    
-    // Strict Zoom: Only 1.0 (Full view) to 8.0 (Close up). Translate restricted strictly to SVG bounds.
-    zoom = d3.zoom().scaleExtent([1, 8]).translateExtent([[0,0],[900,460]]).on('zoom', e => mapG.attr('transform', e.transform));
-    mapSvg.call(zoom);
-
-    mapG.selectAll('path').data(geo.features).enter().append('path').attr('d', pathGen)
-      .attr('stroke', '#0c0c0c').attr('stroke-width', 0.5)
-      .on('click', (ev, d) => {
-        const c = COUNTRIES.find(x => x.code === d.properties.iso);
-        if(c) {
-            const bounds = pathGen.bounds(d);
-            const dx = bounds[1][0] - bounds[0][0], dy = bounds[1][1] - bounds[0][1];
-            const x = (bounds[0][0] + bounds[1][0]) / 2, y = (bounds[0][1] + bounds[1][1]) / 2;
-            const scale = Math.max(1, Math.min(6, 0.9 / Math.max(dx / 900, dy / 460)));
-            const translate = [450 - scale * x, 240 - scale * y];
-            mapSvg.transition().duration(750).call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
-            openTripModal(null, c);
-        }
+ 
+// ── MAP ──
+function initMap(){
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r=>r.json()).then(w=>{
+    const geo=topojson.feature(w,w.objects.countries);
+    geo.features.forEach(f=>f.properties.iso=N2A[parseInt(f.id)]||'');
+    const proj=d3.geoNaturalEarth1().scale(148).translate([450,228]);
+    pg=d3.geoPath().projection(proj);
+    const svg=d3.select('#map-svg');
+    mapG=svg.append('g');
+    zoom=d3.zoom().scaleExtent([1,8]).translateExtent([[0,0],[900,440]]).on('zoom',e=>mapG.attr('transform',e.transform));
+    svg.call(zoom);
+    const tt=document.getElementById('mtt');
+    mapG.selectAll('.cp').data(geo.features).enter().append('path').attr('class','cp').attr('d',pg).attr('stroke','#080808').attr('stroke-width',.4)
+      .on('mouseover',function(ev,d){const co=CC.find(x=>x.c===d.properties.iso);if(!co)return;tt.textContent=co.f+' '+co.n;tt.style.opacity='1';})
+      .on('mousemove',function(ev){const r=document.getElementById('map-svg').getBoundingClientRect();tt.style.left=((ev.clientX-r.left)/r.width*100)+'%';tt.style.top=((ev.clientY-r.top)/r.height*100)+'%';})
+      .on('mouseout',()=>tt.style.opacity='0')
+      .on('click',function(ev,d){
+        ev.stopPropagation();
+        const co=CC.find(x=>x.c===d.properties.iso);if(!co)return;
+        const b=pg.bounds(d),dx=b[1][0]-b[0][0],dy=b[1][1]-b[0][1],cx=(b[0][0]+b[1][0])/2,cy=(b[0][1]+b[1][1])/2;
+        const sc=Math.max(1,Math.min(7,.85/Math.max(dx/900,dy/440)));
+        d3.select('#map-svg').transition().duration(600).call(zoom.transform,d3.zoomIdentity.translate(450-sc*cx,228-sc*cy).scale(sc));
+        openTripModal(null,co);
       });
-    renderMapColors();
-  });
+    mc();done();
+  }).catch(()=>done());
 }
-function renderMapColors() {
-  if(!mapG) return;
-  const v = new Set(state.trips.map(t=>t.country));
-  mapG.selectAll('path').attr('fill', d => v.has(d.properties.iso) ? '#b8e060' : '#1e1e1e');
+function mc(){
+  if(!mapG)return;
+  const v=vis(),wt=new Set(S.trips.map(t=>t.country));
+  mapG.selectAll('.cp').attr('fill',d=>{const iso=d.properties?.iso;if(!iso)return'#161616';if(wt.has(iso))return'#c4f04a';if(v.has(iso))return'#6a8a28';return'#1e1e1e';});
 }
-
-// ─── 5. COUNTRIES & ROADMAP ─────────────────────────────────
-function renderRegionTabs() {
-  document.getElementById('region-tabs').innerHTML = REGIONS.map(r => `<button class="region-tab ${r===currentFilterRegion?'active':''}" onclick="currentFilterRegion='${r}'; renderRegionTabs(); renderCountriesList();">${r}</button>`).join('');
-}
-function renderCountriesList() {
-  const q = document.getElementById('inp-search').value.toLowerCase();
-  const v = new Set(state.trips.map(t=>t.country));
-  let arr = COUNTRIES.filter(c => c.name.toLowerCase().includes(q));
-  if(currentFilterRegion !== 'All') arr = arr.filter(c => c.region === currentFilterRegion);
-  
-  document.getElementById('countries-list').innerHTML = arr.map(c => `
-    <div class="country-item" onclick="openTripModal(null, COUNTRIES.find(x=>x.code==='${c.code}'))">
-      <div class="country-item-left"><span class="country-flag">${c.flag}</span><div><div class="country-name">${c.name}</div><div class="country-region">${c.region}</div></div></div>
-      <div class="country-status ${v.has(c.code)?'status-visited':'status-none'}">${v.has(c.code)?'Visited':'Not yet'}</div>
+ 
+// ── COUNTRIES ──
+function renderRTabs(){document.getElementById('rs').innerHTML=REGS.map(r=>`<button class="rt ${r===fr?'active':''}" onclick="setR('${r}')">${r}</button>`).join('');}
+function setR(r){fr=r;renderRTabs();renderC();}
+function renderC(){
+  const q=(document.getElementById('cs')?.value||'').toLowerCase();
+  const v=vis(),wh=new Set(S.trips.filter(t=>t.stops.some(s=>s.hotels.length)).map(t=>t.country));
+  const arr=CC.filter(co=>co.n.toLowerCase().includes(q)&&(fr==='All'||co.r===fr));
+  document.getElementById('cl').innerHTML=arr.map(co=>`
+    <div class="ci" onclick="openCD('${co.c}')">
+      <span class="cf">${co.f}</span>
+      <div class="cn"><div class="cn-name">${co.n}</div><div class="cn-reg">${co.r}${wh.has(co.c)?' <span class="cbdg">Hotel logged</span>':''}</div></div>
+      <div class="ck ${v.has(co.c)?'on':''}"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
     </div>`).join('');
 }
-
-function renderRoadmap() {
-  const feed = document.getElementById('roadmap-feed');
-  if(!state.trips.length) return feed.innerHTML = '<div style="text-align:center; margin-top:60px; color:#555;">No trips logged yet. Tap + to start.</div>';
-  
-  const sorted = [...state.trips].sort((a,b) => {
-    const da = a.stops[0]?.arr ? new Date(a.stops[0].arr) : 0;
-    const db = b.stops[0]?.arr ? new Date(b.stops[0].arr) : 0;
-    return db - da;
-  });
-
-  feed.innerHTML = sorted.map(t => {
-    const c = COUNTRIES.find(x => x.code === t.country) || {name:'Unknown', flag:'🌍'};
-    let totalDays = 0;
-    t.stops.forEach(s => { if(s.arr && s.dep) totalDays += Math.ceil(Math.abs(new Date(s.dep)-new Date(s.arr))/86400000); });
-    
-    const stopsHtml = t.stops.map(s => `
-      <div class="tl-stop-item">
-        <div class="tl-stop-icon">📍</div>
-        <div class="tl-stop-details">
-          <div class="tl-city">${s.city || 'Unknown'} ${s.state ? `<span style="color:#666; font-size:12px;">(${s.state})</span>` : ''}</div>
-          <div style="font-size:11px; color:#666; margin-bottom: 4px;">${s.arr} ➔ ${s.dep}</div>
-          ${s.hotels.length ? `<div class="tl-hotels">${s.hotels.map(h => `<div class="tl-hotel-badge">🏨 ${h}</div>`).join('')}</div>` : ''}
-        </div>
-      </div>
-    `).join('');
-
-    return `
-      <div class="timeline-item">
-        <div class="timeline-dot"></div>
-        <div class="timeline-card" onclick="openTripModal('${t.id}')">
-          <div class="tl-header">
-            <div>
-              <div class="tl-country">${c.flag} ${c.name}</div>
-              <div class="tl-meta"><span>${totalDays} Days</span> • <span style="color:#b8e060">${t.purpose}</span></div>
-            </div>
-            <div class="tl-trans">${t.trans.split(' ')[0]}</div>
-          </div>
-          <div class="tl-stops">${stopsHtml}</div>
-        </div>
-      </div>`;
+ 
+// ── ROADMAP ──
+function renderR(){
+  const feed=document.getElementById('rf');
+  if(!S.trips.length){feed.innerHTML='<div class="es"><div class="es-i">🗺</div><div class="es-t">No trips logged yet.<br>Tap + to start your chronicles.</div></div>';return;}
+  const sorted=[...S.trips].sort((a,b)=>{const da=a.stops[0]?.arr?new Date(a.stops[0].arr):0,db=b.stops[0]?.arr?new Date(b.stops[0].arr):0;return db-da;});
+  feed.innerHTML=sorted.map(t=>{
+    const co=CC.find(x=>x.c===t.country)||{n:'Unknown',f:'🌍'};
+    let d=0;t.stops.forEach(s=>{if(s.arr&&s.dep)d+=Math.max(0,Math.ceil((new Date(s.dep)-new Date(s.arr))/86400000));});
+    const sh=t.stops.map(s=>`<div class="tlsr"><div style="font-size:12px;flex-shrink:0;margin-top:2px">📍</div><div><div class="tlscity">${s.city||'?'}${s.state?` <span style="color:var(--t3);font-size:11px">(${s.state})</span>`:''}</div><div class="tlsdt">${s.arr||'?'} → ${s.dep||'?'}</div>${s.hotels.length?`<div class="tlshtl">${s.hotels.map(h=>`<span class="htag">🏨 ${h}</span>`).join('')}</div>`:''}</div></div>`).join('');
+    return `<div class="tli"><div class="tld"></div><div class="tlc" onclick="openTripModal('${t.id}')"><div class="tlch"><div><div class="tlcn">${co.f} ${co.n}</div><div class="tlm"><span class="chip">${d} days</span><span class="chip g">${t.purpose||'Leisure'}</span></div></div><div class="tlch-r">${(t.trans||'✈️').split(' ')[0]}</div></div><div class="tls">${sh}</div></div></div>`;
   }).join('');
 }
-
-// ─── 6. PROFILE & PURPOSES ──────────────────────────────────
-function renderPurposesSettings() {
-  document.getElementById('purposes-list').innerHTML = state.purposes.map(p => `
-    <div class="purpose-tag">${p} <span onclick="removePurpose('${p}')">✕</span></div>
-  `).join('');
-  const sel = document.getElementById('fm-purpose');
-  sel.innerHTML = state.purposes.map(p => `<option value="${p}">${p}</option>`).join('');
-}
-function addPurpose() {
-  const v = document.getElementById('new-purpose-input').value.trim();
-  if(v && !state.purposes.includes(v)) { state.purposes.push(v); document.getElementById('new-purpose-input').value = ''; saveLocal(); renderPurposesSettings(); }
-}
-function removePurpose(p) {
-  state.purposes = state.purposes.filter(x => x !== p); saveLocal(); renderPurposesSettings();
-}
-
-// ─── 7. TRIP MODAL & STOPS ──────────────────────────────────
-function setupCountrySearch() {
-  const input = document.getElementById('fm-country-input');
-  const list = document.getElementById('fm-country-list');
-  input.addEventListener('input', () => {
-    const q = input.value.toLowerCase();
-    list.innerHTML = COUNTRIES.filter(c => c.name.toLowerCase().includes(q)).map(c => `
-      <div class="dropdown-item" onclick="selectCountryForm('${c.code}', '${c.name}', '${c.flag}')">${c.flag} ${c.name}</div>
-    `).join('');
-    list.classList.toggle('show', q.length > 0);
+ 
+// ── COUNTRY DETAIL ──
+function openCD(code){
+  const co=CC.find(x=>x.c===code);if(!co)return;
+  document.getElementById('cdf').textContent=co.f;
+  document.getElementById('cdn').textContent=co.n;
+  const trips=S.trips.filter(t=>t.country===code),qv=S.qv[code];
+  let html='';
+  if(qv)html+=`<div class="cstc"><div style="font-size:13px;font-weight:500;color:var(--t1)">Quick visit mark</div><div class="cstm"><span>${qv}</span></div></div>`;
+  if(!trips.length&&!qv)html=`<div style="text-align:center;color:var(--t3);padding:24px 0;font-size:13px">Not visited yet — log your first visit!</div>`;
+  trips.forEach(t=>{
+    const d=t.stops.reduce((a,s)=>a+(s.arr&&s.dep?Math.max(0,Math.ceil((new Date(s.dep)-new Date(s.arr))/86400000)):0),0);
+    const ht=t.stops.flatMap(s=>s.hotels);
+    html+=`<div class="cstc" onclick="cm('ov-cd');openTripModal('${t.id}')"><div style="font-size:14px;font-weight:600;color:var(--t1);display:flex;justify-content:space-between"><span>${t.purpose||'Trip'}</span><span style="color:var(--t3);font-size:12px">${(t.trans||'').split(' ')[0]}</span></div><div class="cstm"><span>${d} days</span>${t.stops[0]?.arr?`<span>· ${t.stops[0].arr.slice(0,7)}</span>`:''} ${ht.length?`<span>· ${ht.length} hotel${ht.length>1?'s':''}</span>`:''}</div></div>`;
   });
-  document.addEventListener('click', e => { if(!e.target.closest('.search-box')) list.classList.remove('show'); });
+  document.getElementById('cdb').innerHTML=html;
+  document.getElementById('cdlogbtn').onclick=()=>{cm('ov-cd');openTripModal(null,co);};
+  document.getElementById('ov-cd').classList.add('open');
 }
-
-function selectCountryForm(code, name, flag) {
-  selectedCountryCode = code;
-  document.getElementById('fm-country-input').value = `${flag} ${name}`;
-  document.getElementById('fm-country-list').classList.remove('show');
-  renderStopsUI();
-}
-
-function openTripModal(tripId = null, prefillCountryObj = null) {
-  currentEditId = tripId;
-  const isEdit = !!tripId;
-  document.getElementById('fm-title').textContent = isEdit ? 'Edit Trip' : 'Log New Trip';
-  document.getElementById('fm-btn-del').style.display = isEdit ? 'block' : 'none';
-
-  if(isEdit) {
-    const t = state.trips.find(x => x.id === tripId);
-    const cObj = COUNTRIES.find(x => x.code === t.country);
-    selectedCountryCode = t.country;
-    document.getElementById('fm-country-input').value = cObj ? `${cObj.flag} ${cObj.name}` : '';
-    document.getElementById('fm-purpose').value = t.purpose || state.purposes[0];
-    document.getElementById('fm-trans').value = t.trans;
-    document.getElementById('fm-notes').value = t.notes || '';
-    stopsData = JSON.parse(JSON.stringify(t.stops || []));
+ 
+// ── TRIP MODAL ──
+function openTripModal(id=null,pre=null){
+  eid=id;const ie=!!id;
+  document.getElementById('tmt').textContent=ie?'Edit Trip':'Log Trip';
+  document.getElementById('bdel').style.display=ie?'block':'none';
+  document.getElementById('tsel').style.display=ie?'none':'flex';
+  if(ie){
+    setT('trip',true);
+    const t=S.trips.find(x=>x.id===id),co=CC.find(x=>x.c===t.country);
+    selC=co||null;
+    document.getElementById('fci').value=co?`${co.f} ${co.n}`:'';
+    document.getElementById('fpur').value=t.purpose;
+    document.getElementById('ftr').value=t.trans;
+    document.getElementById('fnotes').value=t.notes||'';
+    stops=JSON.parse(JSON.stringify(t.stops));
+  } else if(pre){
+    setT('trip',true);selC=pre;
+    document.getElementById('fci').value=`${pre.f} ${pre.n}`;
+    stops=[mkS()];
   } else {
-    selectedCountryCode = prefillCountryObj ? prefillCountryObj.code : null;
-    document.getElementById('fm-country-input').value = prefillCountryObj ? `${prefillCountryObj.flag} ${prefillCountryObj.name}` : '';
-    document.getElementById('fm-purpose').value = state.purposes[0];
-    document.getElementById('fm-trans').value = '✈️ Plane';
-    document.getElementById('fm-notes').value = '';
-    stopsData = [ createEmptyStop() ];
+    setT('trip',true);selC=null;
+    document.getElementById('fci').value='';
+    document.getElementById('fpur').value=S.purposes[0];
+    document.getElementById('ftr').value='✈️ Plane';
+    document.getElementById('fnotes').value='';
+    stops=[mkS()];
   }
-  renderStopsUI();
-  document.getElementById('sheet-trip').classList.add('open');
+  renderStp();
+  document.getElementById('ov-trip').classList.add('open');
 }
-
-function createEmptyStop() {
-  const today = new Date().toISOString().split('T')[0];
-  return { id: Date.now()+Math.random(), city: '', state: '', arr: today, dep: today, hotels: [] };
+ 
+function setT(t,silent=false){
+  ttype=t;
+  document.getElementById('tf').style.display=t==='trip'?'block':'none';
+  document.getElementById('qf').style.display=t==='quick'?'block':'none';
+  document.getElementById('tb-trip').classList.toggle('active',t==='trip');
+  document.getElementById('tb-quick').classList.toggle('active',t==='quick');
+  if(t==='quick'&&!silent){qselC=null;document.getElementById('qfci').value='';document.getElementById('qyr').value=new Date().getFullYear();}
 }
-
-function addStop() { saveStopsState(); stopsData.push(createEmptyStop()); renderStopsUI(); }
-function removeStop(id) { stopsData = stopsData.filter(s => s.id !== id); renderStopsUI(); }
-
-function addHotelToStop(stopId) {
-  saveStopsState();
-  const input = document.getElementById(`hotel-input-${stopId}`);
-  const val = input.value.trim();
-  if(val) { stopsData.find(s => s.id === stopId).hotels.push(val); renderStopsUI(); }
+ 
+// ── AUTOCOMPLETE ──
+function acs(q){
+  const l=document.getElementById('acl');if(!q.trim()){l.classList.remove('open');return;}
+  const r=CC.filter(co=>co.n.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  l.innerHTML=r.map(co=>`<div class="aci" onclick="pickC('${co.c}','${co.n}','${co.f}')">${co.f} ${co.n}</div>`).join('');
+  l.classList.toggle('open',r.length>0);
 }
-function removeHotel(stopId, hotelIdx) {
-  saveStopsState();
-  stopsData.find(s => s.id === stopId).hotels.splice(hotelIdx, 1);
-  renderStopsUI();
+function pickC(c,n,f){selC={c,n,f};document.getElementById('fci').value=`${f} ${n}`;document.getElementById('acl').classList.remove('open');}
+function acsq(q){
+  const l=document.getElementById('qacl');if(!q.trim()){l.classList.remove('open');return;}
+  const r=CC.filter(co=>co.n.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  l.innerHTML=r.map(co=>`<div class="aci" onclick="pickCQ('${co.c}','${co.n}','${co.f}')">${co.f} ${co.n}</div>`).join('');
+  l.classList.toggle('open',r.length>0);
 }
-
-function saveStopsState() {
-  stopsData.forEach(s => {
-    const cEl = document.getElementById(`stop-city-${s.id}`), aEl = document.getElementById(`stop-arr-${s.id}`);
-    const dEl = document.getElementById(`stop-dep-${s.id}`), stEl = document.getElementById(`stop-state-${s.id}`);
-    if(cEl) s.city = cEl.value; if(aEl) s.arr = aEl.value;
-    if(dEl) s.dep = dEl.value; if(stEl) s.state = stEl.value;
-  });
+function pickCQ(c,n,f){qselC={c,n,f};document.getElementById('qfci').value=`${f} ${n}`;document.getElementById('qacl').classList.remove('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.acw')){document.getElementById('acl')?.classList.remove('open');document.getElementById('qacl')?.classList.remove('open');}});
+ 
+// ── STOPS ──
+function mkS(){const t=new Date().toISOString().split('T')[0];return{id:Date.now()+Math.random(),city:'',state:'',arr:t,dep:t,hotels:[]};}
+function addStop(){flush();stops.push(mkS());renderStp();}
+function rmStop(id){flush();stops=stops.filter(s=>s.id!==id);renderStp();}
+function addH(id){flush();const i=document.getElementById(`hi-${id}`);const v=i?.value.trim();if(!v)return;stops.find(s=>s.id===id)?.hotels.push(v);renderStp();}
+function rmH(sid,hi){flush();stops.find(s=>s.id===sid)?.hotels.splice(hi,1);renderStp();}
+function flush(){stops.forEach(s=>{const ci=document.getElementById(`sc-${s.id}`),st=document.getElementById(`ss-${s.id}`),ar=document.getElementById(`sa-${s.id}`),dp=document.getElementById(`sd-${s.id}`);if(ci)s.city=ci.value;if(st)s.state=st.value;if(ar)s.arr=ar.value;if(dp)s.dep=dp.value;});}
+function renderStp(){
+  document.getElementById('scon').innerHTML=stops.map((s,i)=>`
+    <div class="stpc">
+      <div class="stph"><span class="stpn">STOP ${i+1}</span>${stops.length>1?`<button class="brs" onclick="rmStop(${s.id})">Remove</button>`:''}</div>
+      <div class="fr2" style="margin-bottom:10px">
+        <div class="fg" style="margin:0"><label class="fl">City</label><input class="fi" id="sc-${s.id}" value="${s.city}" placeholder="City…"/></div>
+        <div class="fg" style="margin:0"><label class="fl">Region / State</label><input class="fi" id="ss-${s.id}" value="${s.state||''}" placeholder="Optional…"/></div>
+      </div>
+      <div class="fr2" style="margin-bottom:10px">
+        <div class="fg" style="margin:0"><label class="fl">Arrival</label><input class="fi" type="date" id="sa-${s.id}" value="${s.arr}"/></div>
+        <div class="fg" style="margin:0"><label class="fl">Departure</label><input class="fi" type="date" id="sd-${s.id}" value="${s.dep}"/></div>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">Hotels &amp; stays</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input class="fi" id="hi-${s.id}" placeholder="Hotel name…" onkeydown="if(event.key==='Enter'){event.preventDefault();addH(${s.id})}"/>
+          <button class="bah" onclick="addH(${s.id})">+</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${s.hotels.map((h,hi)=>`<span class="ht">🏨 ${h} <span class="htx" onclick="rmH(${s.id},${hi})">✕</span></span>`).join('')}</div>
+      </div>
+    </div>`).join('');
 }
-
-function renderStopsUI() {
-  const container = document.getElementById('stops-container');
-  const regionsList = SUB_REGIONS[selectedCountryCode];
-  
-  container.innerHTML = stopsData.map((s, i) => {
-    let stateHtml = '';
-    if (regionsList) {
-      stateHtml = `<select class="input-solid" id="stop-state-${s.id}">
-                    <option value="">Region/State...</option>
-                    ${regionsList.map(st => `<option value="${st}" ${s.state===st?'selected':''}>${st}</option>`).join('')}
-                   </select>`;
-    } else {
-      stateHtml = `<input type="text" class="input-solid" id="stop-state-${s.id}" value="${s.state||''}" placeholder="Region / State (Optional)">`;
+ 
+// ── SAVE / DELETE ──
+function saveTrip(){
+  if(!selC)return toast('Select a destination country',true);
+  flush();if(!stops[0]?.city)return toast('Add at least one city',true);
+  const payload={country:selC.c,purpose:document.getElementById('fpur').value,trans:document.getElementById('ftr').value,notes:document.getElementById('fnotes').value,stops:JSON.parse(JSON.stringify(stops))};
+  if(eid){const i=S.trips.findIndex(t=>t.id===eid);if(i>-1)S.trips[i]={...S.trips[i],...payload};toast('Trip updated ✓');}
+  else{S.trips.push({id:Date.now().toString(),...payload});toast('Trip logged ✓');}
+  save();cm('ov-trip');
+  if(S.at.ok)pushAT();
+}
+function saveQ(){
+  if(!qselC)return toast('Select a country',true);
+  S.qv[qselC.c]=document.getElementById('qyr').value||new Date().getFullYear();
+  save();toast(`${qselC.f} ${qselC.n} marked ✓`);cm('ov-trip');
+}
+function delTrip(){if(!confirm('Delete this trip?'))return;S.trips=S.trips.filter(t=>t.id!==eid);save();toast('Deleted');cm('ov-trip');}
+ 
+// ── PURPOSES ──
+function fillPS(){const s=document.getElementById('fpur'),cv=s?.value;if(s)s.innerHTML=S.purposes.map(p=>`<option value="${p}">${p}</option>`).join('');if(cv&&s)s.value=cv;}
+function renderP(){
+  document.getElementById('ptags').innerHTML=S.purposes.map(p=>`<div class="ptag">${p} <span class="ptag-x" onclick="rmP('${p}')">✕</span></div>`).join('');
+  fillPS();
+}
+function addP(){const v=document.getElementById('np').value.trim();if(v&&!S.purposes.includes(v)){S.purposes.push(v);document.getElementById('np').value='';save();}}
+function rmP(p){S.purposes=S.purposes.filter(x=>x!==p);save();}
+ 
+// ── AIRTABLE ──
+async function connectAT(){
+  const tok=document.getElementById('att').value.trim(),base=document.getElementById('atb').value.trim();
+  const ct=document.getElementById('atct').value.trim()||'Countries',ht=document.getElementById('atht').value.trim()||'Hotels';
+  if(!tok||!base)return toast('Fill in token and base ID',true);
+  S.at={tok,base,ct,ht,ok:false};toast('Connecting…');
+  try{
+    const r=await fetch(`https://api.airtable.com/v0/${base}/${encodeURIComponent(ct)}?maxRecords=1`,{headers:{Authorization:'Bearer '+tok}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    S.at.ok=true;document.getElementById('atd').classList.add('on');document.getElementById('atst').textContent='Connected';
+    save();toast('Airtable connected ✓');pushAT();
+  }catch(e){toast('Connection failed: '+e.message,true);}
+}
+async function pushAT(){
+  const{tok,base,ct,ht}=S.at,H={'Authorization':'Bearer '+tok,'Content-Type':'application/json'};
+  const v=vis();
+  for(const code of v){
+    const co=CC.find(x=>x.c===code);
+    try{
+      const chk=await fetch(`https://api.airtable.com/v0/${base}/${encodeURIComponent(ct)}?filterByFormula={Code}="${code}"`,{headers:H});
+      const d=await chk.json();
+      if(d.records?.length)await fetch(`https://api.airtable.com/v0/${base}/${encodeURIComponent(ct)}/${d.records[0].id}`,{method:'PATCH',headers:H,body:JSON.stringify({fields:{Visited:true}})});
+      else await fetch(`https://api.airtable.com/v0/${base}/${encodeURIComponent(ct)}`,{method:'POST',headers:H,body:JSON.stringify({fields:{Code:code,Name:co?.n||code,Visited:true}})});
+    }catch(e){}
+  }
+  for(const t of S.trips){
+    const co=CC.find(x=>x.c===t.country);
+    for(const s of t.stops){
+      for(const h of s.hotels){
+        try{await fetch(`https://api.airtable.com/v0/${base}/${encodeURIComponent(ht)}`,{method:'POST',headers:H,body:JSON.stringify({fields:{Name:h,City:s.city,Country:co?.n||t.country,CountryCode:t.country,Arrival:s.arr||null,Departure:s.dep||null,TripID:t.id}})});}catch(e){}
+      }
     }
-
-    return `
-      <div class="stop-card">
-        <div class="stop-header">Stop ${i+1} ${stopsData.length>1 ? `<button class="btn-remove-stop" onclick="removeStop(${s.id})">Remove</button>` : ''}</div>
-        <div class="stop-grid">
-          <input type="text" class="input-solid" id="stop-city-${s.id}" value="${s.city}" placeholder="City Name">
-          ${stateHtml}
-          <div><label style="font-size:10px;color:#888;">Arrival</label><input type="date" class="input-solid" id="stop-arr-${s.id}" value="${s.arr}"></div>
-          <div><label style="font-size:10px;color:#888;">Departure</label><input type="date" class="input-solid" id="stop-dep-${s.id}" value="${s.dep}"></div>
-        </div>
-        <div style="margin-top:12px;">
-          <label style="font-size:10px;color:#888;">Hotels & Stays</label>
-          <div class="hotel-input-wrap">
-            <input type="text" class="input-solid" id="hotel-input-${s.id}" placeholder="Type hotel name...">
-            <button class="btn-add-hotel" onclick="addHotelToStop(${s.id})">+</button>
-          </div>
-          <div style="display:flex; flex-wrap:wrap; gap:6px;">
-            ${s.hotels.map((h, hIdx) => `<div style="background:#1a2e05; border:1px solid #2a4a0a; color:#b8e060; padding:4px 10px; border-radius:6px; font-size:12px;">🏨 ${h} <span style="margin-left:6px; cursor:pointer;" onclick="removeHotel(${s.id}, ${hIdx})">✕</span></div>`).join('')}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function saveTrip() {
-  if(!selectedCountryCode) return showToast('Select a destination country', true);
-  saveStopsState();
-  if(!stopsData[0].city) return showToast('Add at least one city', true);
-
-  const payload = {
-    country: selectedCountryCode,
-    purpose: document.getElementById('fm-purpose').value,
-    trans: document.getElementById('fm-trans').value,
-    notes: document.getElementById('fm-notes').value,
-    stops: JSON.parse(JSON.stringify(stopsData))
-  };
-
-  if(currentEditId) {
-    const idx = state.trips.findIndex(t => t.id === currentEditId);
-    state.trips[idx] = { ...state.trips[idx], ...payload };
-    showToast('Trip updated!');
-  } else {
-    state.trips.push({ id: Date.now().toString(), ...payload });
-    showToast('Trip logged!');
   }
-  
-  saveLocal();
-  closeModal('sheet-trip');
 }
-
-function deleteCurrentTrip() {
-  if(!confirm('Delete this trip entirely?')) return;
-  state.trips = state.trips.filter(t => t.id !== currentEditId);
-  saveLocal();
-  closeModal('sheet-trip');
-  showToast('Trip deleted');
-}
-
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function switchScreen(id, btn) {
-  document.querySelectorAll('.screen, .nav-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active'); btn.classList.add('active');
-}
-
-async function syncWithAirtable() { showToast('Airtable sync structure ready!'); }
-document.addEventListener('DOMContentLoaded', init);
+ 
+// ── PROFILE ──
+function editName(){const n=prompt('Your name:',S.profile.name);if(n!==null){S.profile.name=n.trim()||'Traveler';save();}}
+function exportJ(){const b=new Blob([JSON.stringify({visited:[...vis()],trips:S.trips,quickVisits:S.qv,at:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='nisho-data.json';a.click();}
+function resetAll(){S.trips=[];S.qv={};save();toast('Data reset');}
+ 
+// ── NAV ──
+function sw(id,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));document.getElementById('s'+id).classList.add('active');btn.classList.add('active');}
+function cm(id){document.getElementById(id).classList.remove('open');}
+ 
+// ── TOAST ──
+function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='toast'+(err?' err':'')+' show';clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2400);}
+ 
+// ── LOADING ──
+function done(){document.getElementById('ldb').style.width='100%';setTimeout(()=>{const l=document.getElementById('ldg');l.classList.add('out');setTimeout(()=>l.remove(),500);},350);}
+ 
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',()=>{
+  load();
+  requestAnimationFrame(()=>document.getElementById('ldb').style.width='55%');
+  renderRTabs();renderP();renderC();renderR();updStats();updPS();
+  if(S.at.tok)document.getElementById('att').value=S.at.tok;
+  if(S.at.base)document.getElementById('atb').value=S.at.base;
+  if(S.at.ct)document.getElementById('atct').value=S.at.ct;
+  if(S.at.ht)document.getElementById('atht').value=S.at.ht;
+  if(S.at.ok){document.getElementById('atd').classList.add('on');document.getElementById('atst').textContent='Connected';}
+  initMap();
+});
 </script>
 </body>
 </html>
