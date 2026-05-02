@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<!-- META TAGS CLAVES PARA iPHONE (PWA A PANTALLA COMPLETA) -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#0c0c0c" />
 <title>Nisho — Your World</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -11,7 +16,7 @@
 <style>
 /* ─── RESET & BASE ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overscroll-behavior-y: none; }
+html, body { height: 100%; overscroll-behavior-y: none; } /* Evita el 'bounce' en iOS */
 
 body {
   font-family: 'Inter', -apple-system, sans-serif;
@@ -37,12 +42,13 @@ a { color: inherit; text-decoration: none; }
   margin: 0 auto;
   position: relative;
   background: #0c0c0c;
+  padding-bottom: env(safe-area-inset-bottom); /* Soporte para el 'notch' de iPhone */
 }
 
-/* ─── GLOBAL ADD BUTTON ─────────────────────────────────────── */
+/* ─── FLOATING ADD BUTTON ───────────────────────────────────── */
 .global-add-fab {
   position: absolute;
-  top: 16px;
+  top: max(20px, env(safe-area-inset-top));
   right: 20px;
   width: 44px; height: 44px;
   border-radius: 50%;
@@ -55,7 +61,7 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   justify-content: center;
   z-index: 200;
-  box-shadow: 0 4px 14px rgba(184, 224, 96, 0.2);
+  box-shadow: 0 4px 14px rgba(184, 224, 96, 0.15);
   transition: transform 0.2s;
 }
 .global-add-fab:active { transform: scale(0.92); }
@@ -74,169 +80,144 @@ a { color: inherit; text-decoration: none; }
 .bottom-nav {
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 72px;
-  background: #111;
+  height: calc(72px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(17, 17, 17, 0.95);
+  backdrop-filter: blur(10px);
   border-top: 1px solid #1f1f1f;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 0 4px;
   z-index: 100;
 }
 
 .nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 2px;
-  background: none;
-  border: none;
-  color: #444;
-  font-size: 9px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  transition: color 0.2s;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 4px; background: none; border: none; color: #444; font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s;
 }
 .nav-item.active { color: #e8e4de; }
 .nav-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
-.nav-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.nav-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
-/* ─── COMMON HEADERS ────────────────────────────────────────── */
-.screen-header {
-  padding: 24px 80px 16px 20px; /* Right padding for the floating button */
-  border-bottom: 1px solid #1a1a1a;
-  flex-shrink: 0;
-}
-.screen-title { font-size: 22px; font-weight: 300; color: #e8e4de; }
+/* ─── SCREEN HEADERS ────────────────────────────────────────── */
+.screen-header { padding: max(24px, env(safe-area-inset-top)) 80px 16px 20px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; }
+.screen-title { font-size: 24px; font-weight: 300; color: #e8e4de; }
 .screen-sub { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
 
-/* ─── SCREEN: MAP ───────────────────────────────────────────── */
-#world-map-svg {
-  width: 100%;
-  flex-shrink: 0;
-  display: block;
-  background: #080808;
-  cursor: grab;
-}
+/* ─── MAP SCREEN ────────────────────────────────────────────── */
+#world-map-svg { width: 100%; flex-shrink: 0; display: block; background: #080808; cursor: grab; }
 #world-map-svg:active { cursor: grabbing; }
 
-.map-stats-row {
-  display: flex;
-  padding: 16px 20px;
-  border-top: 1px solid #1a1a1a;
-  border-bottom: 1px solid #1a1a1a;
-}
+.map-stats-row { display: flex; padding: 16px 20px; border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; }
 .map-stat { flex: 1; text-align: center; border-right: 1px solid #1a1a1a; padding: 0 8px; }
 .map-stat:first-child { text-align: left; padding-left: 0; }
 .map-stat:last-child { border-right: none; }
-.map-stat-num { font-size: 26px; font-weight: 300; color: #e8e4de; margin-bottom: 3px; line-height: 1;}
+.map-stat-num { font-size: 26px; font-weight: 300; color: #e8e4de; line-height: 1; margin-bottom: 3px; }
 .map-stat-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #444; }
 
-/* ─── SCREEN: ROADMAP (TIMELINE) ────────────────────────────── */
-.timeline-container { padding: 24px 20px; }
-.timeline-line { border-left: 2px solid #222; padding-left: 20px; margin-left: 8px; }
-.trip-card {
-  position: relative;
-  background: #141414;
-  border: 1px solid #1e1e1e;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
-}
-.trip-card::before {
-  content: '';
-  position: absolute;
-  left: -27px;
-  top: 16px;
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background: #b8e060;
-  border: 3px solid #0c0c0c;
-}
-.trip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.trip-title { font-size: 16px; font-weight: 500; color: #e8e4de; }
-.trip-dates { font-size: 11px; color: #666; margin-top: 2px; }
-.trip-transport { font-size: 18px; }
-.trip-meta {
-  display: flex; gap: 8px; margin-top: 12px; padding-top: 12px;
-  border-top: 1px solid #1f1f1f;
-}
-.meta-chip {
-  font-size: 10px; background: #1a1a1a; padding: 4px 8px;
-  border-radius: 4px; color: #888; text-transform: uppercase; letter-spacing: 0.05em;
-}
-.meta-chip.hotel { background: #1a2e05; color: #7ab83a; }
+.progress-wrap { height: 2px; background: #1a1a1a; border-radius: 1px; margin-top: 8px; overflow: hidden; }
+.progress-fill { height: 2px; background: #b8e060; border-radius: 1px; transition: width 0.8s; }
 
-/* ─── SCREEN: COUNTRIES & AIRPORTS ───────────────────────────── */
-.search-box {
-  display: flex; align-items: center; background: #181818;
-  border: 1px solid #222; border-radius: 8px; padding: 0 12px; gap: 8px; margin-top: 14px;
-}
+/* ─── COUNTRIES SCREEN ──────────────────────────────────────── */
+.search-box { display: flex; align-items: center; background: #181818; border: 1px solid #222; border-radius: 8px; padding: 0 12px; gap: 8px; margin-top: 16px; }
+.search-box svg { width: 14px; height: 14px; stroke: #444; }
 .search-box input { flex: 1; background: none; border: none; padding: 10px 0; font-size: 13px; color: #e8e4de; outline: none; }
-.list-item {
-  display: flex; align-items: center; gap: 12px; padding: 14px 20px;
-  border-bottom: 1px solid #141414;
-}
-.list-item-title { font-size: 14px; color: #d8d4ce; flex: 1; }
-.list-item-sub { font-size: 11px; color: #555; }
-.check-icon { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #333; display: flex; align-items: center; justify-content: center; }
-.check-icon.active { background: #b8e060; border-color: #b8e060; }
-.check-icon.active svg { stroke: #000; width: 12px; height: 12px; }
+.country-item { display: flex; align-items: center; gap: 12px; padding: 13px 20px; border-bottom: 1px solid #141414; cursor: pointer; transition: background 0.12s; }
+.country-item:active { background: #111; }
+.country-flag { font-size: 22px; width: 30px; text-align: center; }
+.country-info { flex: 1; }
+.country-name { font-size: 14px; color: #d8d4ce; }
+.country-sub { font-size: 11px; color: #3a3a3a; margin-top: 2px; }
 
-/* ─── MODALS & FORMS ────────────────────────────────────────── */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300; display: none; align-items: flex-end; justify-content: center;
-}
+/* ─── ROADMAP SCREEN ────────────────────────────────────────── */
+.roadmap-container { padding: 20px; }
+.trip-card { background: #141414; border: 1px solid #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 16px; cursor: pointer; position: relative; overflow: hidden; }
+.trip-card:active { background: #1a1a1a; }
+.trip-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #b8e060; }
+.trip-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.trip-country { font-size: 16px; font-weight: 500; color: #e8e4de; }
+.trip-dates { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+.trip-trans { font-size: 18px; }
+.trip-details { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #1a1a1a; padding-top: 10px; }
+.detail-line { font-size: 12px; color: #888; display: flex; gap: 8px; align-items: flex-start; }
+.detail-icon { font-size: 14px; }
+.hotel-highlight { color: #b8e060; font-weight: 500; }
+
+/* ─── PROFILE & AIRTABLE (From Original) ────────────────────── */
+.profile-header { padding: max(32px, env(safe-area-inset-top)) 20px 24px; border-bottom: 1px solid #1a1a1a; }
+.profile-avatar { width: 68px; height: 68px; border-radius: 50%; background: #1a1a1a; border: 1px solid #252525; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 14px; }
+.profile-name { font-size: 20px; font-weight: 500; color: #e8e4de; margin-bottom: 4px; }
+.profile-handle { font-size: 12px; color: #3a3a3a; letter-spacing: 0.04em; }
+
+.airtable-config { margin: 20px; background: #141414; border: 1px solid #1e1e1e; border-radius: 12px; padding: 16px; }
+.airtable-title { font-size: 12px; font-weight: 500; color: #e8e4de; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.airtable-status { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: #1a2e05; color: #7ab83a; }
+.airtable-status.disconnected { background: #2a1a05; color: #b87a3a; }
+.airtable-field { margin-bottom: 10px; }
+.airtable-field label { display: block; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #555; margin-bottom: 5px; }
+.airtable-field input { width: 100%; background: #0c0c0c; border: 1px solid #222; border-radius: 6px; padding: 10px; font-size: 12px; color: #e8e4de; outline: none; }
+.btn-connect { width: 100%; padding: 12px; background: #e8e4de; color: #0c0c0c; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; margin-top: 10px; }
+
+/* ─── MODALS & BOTTOM SHEETS ────────────────────────────────── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300; display: none; align-items: flex-end; justify-content: center; }
 .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
-.modal-sheet {
-  background: #111; border-radius: 20px 20px 0 0; padding: 0 0 40px;
-  width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto;
-  animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.modal-handle { width: 36px; height: 4px; background: #222; border-radius: 2px; margin: 12px auto 20px; }
-.type-selector { display: flex; gap: 8px; padding: 0 20px 16px; border-bottom: 1px solid #1a1a1a; }
-.type-btn {
-  flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #222; background: transparent; color: #555; font-size: 12px; font-weight: 500; transition: all 0.15s;
-}
-.type-btn.active { background: #1a2e05; border-color: #7ab83a; color: #b8e060; }
-
-.field-group { margin-bottom: 16px; }
-.field-group label { display: block; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #555; margin-bottom: 6px; }
-.field-group input, .field-group select {
-  width: 100%; background: #181818; border: 1px solid #222; border-radius: 8px;
-  padding: 10px 12px; font-size: 14px; color: #e8e4de; outline: none; appearance: none;
-}
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.btn-save { width: 100%; padding: 14px; background: #e8e4de; border: none; border-radius: 8px; color: #0c0c0c; font-weight: 600; margin-top: 10px; }
-.hidden { display: none !important; }
-
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.modal-sheet { background: #111; border-radius: 20px 20px 0 0; padding: 0 0 calc(20px + env(safe-area-inset-bottom)); width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1); }
+.modal-handle { width: 36px; height: 4px; background: #222; border-radius: 2px; margin: 12px auto 20px; }
+.modal-title { font-size: 22px; font-weight: 500; color: #e8e4de; padding: 0 20px; margin-bottom: 16px; }
+
+/* Form Fields inside Modal */
+.field-group { padding: 0 20px; margin-bottom: 16px; }
+.field-group label { display: block; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #555; margin-bottom: 6px; }
+.field-group input, .field-group select { width: 100%; background: #181818; border: 1px solid #222; border-radius: 8px; padding: 12px; font-size: 14px; color: #e8e4de; outline: none; appearance: none; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; margin-bottom: 16px; }
+
+.modal-actions { display: flex; gap: 10px; padding: 10px 20px 0; border-top: 1px solid #1a1a1a; margin-top: 20px; }
+.btn-save { flex: 2; padding: 14px; background: #e8e4de; border: none; border-radius: 8px; color: #0c0c0c; font-weight: 600; }
+.btn-delete { flex: 1; padding: 14px; background: #2a0a0a; border: 1px solid #3a1414; border-radius: 8px; color: #b84040; font-weight: 500; display: none; }
+.btn-outline { width: calc(100% - 40px); margin: 0 20px; padding: 12px; background: transparent; border: 1px solid #b8e060; color: #b8e060; border-radius: 8px; font-weight: 500; }
+
+/* Country detail specifically */
+.country-sheet-hero { font-size: 60px; text-align: center; margin-bottom: 10px; }
+.history-list { padding: 0 20px; margin-bottom: 20px; }
+
+/* ─── UTILS ─────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+.sync-bar { position: fixed; top: 0; left: 0; right: 0; background: #7ab83a; color: #0c0c0c; font-size: 11px; font-weight: 600; text-align: center; padding: max(6px, env(safe-area-inset-top)) 6px 6px; z-index: 500; transform: translateY(-100%); transition: transform 0.3s; }
+.sync-bar.visible { transform: translateY(0); }
+.sync-bar.error { background: #b83a3a; color: #fff; }
 ::-webkit-scrollbar { width: 0; }
 </style>
 </head>
 <body>
 
+<div class="sync-bar" id="sync-bar">Syncing with Airtable...</div>
+
 <div class="app">
+  
+  <button class="global-add-fab" onclick="openTripForm()">+</button>
 
-  <button class="global-add-fab" onclick="openAddModal()">+</button>
-
-  <!-- ═══ SCREEN: MAP ════════════════════════════════════════ -->
+  <!-- ═══ MAP SCREEN ═════════════════════════════════════════ -->
   <div class="screen active" id="screen-map">
     <div class="screen-header">
-      <div class="screen-sub">Your World</div>
-      <div class="screen-title"><span id="hdr-count">0</span> countries</div>
+      <div class="screen-sub">Nisho</div>
+      <div class="screen-title">Your <span id="hdr-count">0</span> countries</div>
     </div>
 
     <svg id="world-map-svg" viewBox="0 0 900 460">
       <rect width="900" height="460" fill="transparent"/>
-      <!-- Map renders here -->
+      <!-- Map rendered via D3 -->
     </svg>
 
     <div class="map-stats-row">
+      <div class="map-stat">
+        <div class="map-stat-num" id="stat-countries">0</div>
+        <div class="map-stat-label">Countries</div>
+        <div class="progress-wrap"><div class="progress-fill" id="progress-bar" style="width:0%"></div></div>
+      </div>
       <div class="map-stat">
         <div class="map-stat-num" id="stat-trips">0</div>
         <div class="map-stat-label">Trips</div>
@@ -245,119 +226,139 @@ a { color: inherit; text-decoration: none; }
         <div class="map-stat-num" id="stat-days">0</div>
         <div class="map-stat-label">Days Away</div>
       </div>
-      <div class="map-stat">
-        <div class="map-stat-num" id="stat-airports">0</div>
-        <div class="map-stat-label">Airports</div>
-      </div>
     </div>
   </div>
 
-  <!-- ═══ SCREEN: ROADMAP ════════════════════════════════════ -->
-  <div class="screen" id="screen-roadmap">
-    <div class="screen-header">
-      <div class="screen-sub">Storyline</div>
-      <div class="screen-title">Your Trips</div>
-    </div>
-    <div class="timeline-container">
-      <div class="timeline-line" id="timeline-list">
-        <!-- Trips injected here -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ SCREEN: COUNTRIES ═══════════════════════════════════ -->
+  <!-- ═══ COUNTRIES SCREEN ═══════════════════════════════════ -->
   <div class="screen" id="screen-countries">
     <div class="screen-header">
       <div class="screen-sub">Exploration</div>
       <div class="screen-title">Countries</div>
       <div class="search-box">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search..." id="country-search" oninput="renderCountries()" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search country..." id="country-search" oninput="renderCountries()" />
       </div>
     </div>
     <div id="countries-list"></div>
   </div>
 
-  <!-- ═══ SCREEN: AIRPORTS ════════════════════════════════════ -->
-  <div class="screen" id="screen-airports">
+  <!-- ═══ ROADMAP SCREEN ═════════════════════════════════════ -->
+  <div class="screen" id="screen-roadmap">
     <div class="screen-header">
-      <div class="screen-sub">Aviation</div>
-      <div class="screen-title">Airports</div>
-      <div class="search-box">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search by IATA or City..." id="airport-search" oninput="renderAirports()" />
-      </div>
+      <div class="screen-sub">Storyline</div>
+      <div class="screen-title">Roadmap</div>
     </div>
-    <div id="airports-list"></div>
+    <div class="roadmap-container" id="roadmap-list">
+      <!-- Trips injected here -->
+    </div>
   </div>
 
-  <!-- ═══ BOTTOM NAV ════════════════════════════════════════════ -->
+  <!-- ═══ PROFILE SCREEN ═════════════════════════════════════ -->
+  <div class="screen" id="screen-profile">
+    <div class="profile-header">
+      <div class="profile-avatar">✦</div>
+      <div class="profile-name" id="profile-name-display">Traveler</div>
+      <div class="profile-handle">@houseofnisho</div>
+    </div>
+
+    <div class="airtable-config">
+      <div class="airtable-title">
+        Airtable Sync <span class="airtable-status disconnected" id="at-status">Disconnected</span>
+      </div>
+      <div class="airtable-field">
+        <label>Personal Access Token</label>
+        <input type="password" id="at-token" placeholder="pat..." />
+      </div>
+      <div class="airtable-field">
+        <label>Base ID</label>
+        <input type="text" id="at-base" placeholder="app..." />
+      </div>
+      <div class="airtable-field">
+        <label>Trips Table Name</label>
+        <input type="text" id="at-trips-table" placeholder="Trips" value="Trips" />
+      </div>
+      <button class="btn-connect" onclick="connectAirtable()">Connect & Sync</button>
+    </div>
+  </div>
+
+  <!-- ═══ BOTTOM NAV ═════════════════════════════════════════ -->
   <nav class="bottom-nav">
     <button class="nav-item active" onclick="switchScreen('map', this)">
       <div class="nav-icon"><svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
       Map
     </button>
+    <button class="nav-item" onclick="switchScreen('countries', this)">
+      <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+      Countries
+    </button>
     <button class="nav-item" onclick="switchScreen('roadmap', this)">
       <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="12" r="2"/></svg></div>
       Roadmap
     </button>
-    <button class="nav-item" onclick="switchScreen('countries', this)">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg></div>
-      Countries
-    </button>
-    <button class="nav-item" onclick="switchScreen('airports', this)">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21.5 4s-2 .5-3.5 2L14.5 9.5 6.3 7.7l-1.6 1.6 5.4 3.7-4 4-2.8-.9-1.4 1.4 3.4 1.1 1.1 3.4 1.4-1.4-.9-2.8 4-4 3.7 5.4 1.6-1.6z"/></svg></div>
-      Airports
+    <button class="nav-item" onclick="switchScreen('profile', this)">
+      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      Profile
     </button>
   </nav>
+
 </div>
 
-<!-- ═══ ADD MODAL ═════════════════════════════════════════════ -->
-<div class="modal-overlay" id="add-modal" onclick="if(event.target===this)closeModal()">
+<!-- ═══ MODALS ═══════════════════════════════════════════════ -->
+
+<!-- 1. Country Detail Sheet -->
+<div class="modal-overlay" id="country-sheet" onclick="if(event.target===this)closeModal('country-sheet')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="type-selector">
-      <button class="type-btn active" id="btn-tab-trip" onclick="switchModalTab('trip')">Log Trip</button>
-      <button class="type-btn" id="btn-tab-airport" onclick="switchModalTab('airport')">Log Airport</button>
+    <div class="country-sheet-hero" id="cs-flag">🌍</div>
+    <div class="modal-title" style="text-align:center" id="cs-name">Country</div>
+    
+    <div class="history-list" id="cs-history">
+      <!-- Past trips injected here -->
     </div>
 
-    <!-- TRIP FORM -->
-    <div id="form-trip" style="padding: 0 20px;">
-      <div class="field-group">
-        <label>Destination Country</label>
-        <select id="i-country" onchange="checkUSState()"><option value="">Select country...</option></select>
-      </div>
-      <div class="field-group hidden" id="fg-state">
-        <label>US State</label>
-        <select id="i-state"><option value="">Select state...</option></select>
-      </div>
-      <div class="field-row">
-        <div class="field-group"><label>Arrival</label><input type="date" id="i-arr" /></div>
-        <div class="field-group"><label>Departure</label><input type="date" id="i-dep" /></div>
-      </div>
-      <div class="field-row">
-        <div class="field-group">
-          <label>Transport</label>
-          <select id="i-trans">
-            <option value="✈️ Plane">✈️ Plane</option>
-            <option value="🚆 Train">🚆 Train</option>
-            <option value="🚗 Car">🚗 Car</option>
-            <option value="🚌 Bus">🚌 Bus</option>
-            <option value="🚢 Ship">🚢 Ship</option>
-          </select>
-        </div>
-        <div class="field-group"><label>Hotel Name</label><input type="text" id="i-hotel" placeholder="Optional..." /></div>
-      </div>
-      <button class="btn-save" onclick="saveTrip()">Save Trip</button>
+    <button class="btn-outline" onclick="openTripFormFromCountry()">+ Add Visit</button>
+  </div>
+</div>
+
+<!-- 2. Trip Form (Add / Edit) -->
+<div class="modal-overlay" id="trip-modal" onclick="if(event.target===this)closeModal('trip-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="tm-title">Log Trip</div>
+
+    <div class="field-group">
+      <label>Destination Country</label>
+      <select id="i-country"><option value="">Select country...</option></select>
+    </div>
+    
+    <div class="field-row">
+      <div class="field-group" style="padding:0; margin:0"><label>Arrival</label><input type="date" id="i-arr" /></div>
+      <div class="field-group" style="padding:0; margin:0"><label>Departure</label><input type="date" id="i-dep" /></div>
+    </div>
+    
+    <div class="field-group">
+      <label>Transport</label>
+      <select id="i-trans">
+        <option value="✈️ Plane">✈️ Plane</option>
+        <option value="🚆 Train">🚆 Train</option>
+        <option value="🚗 Car">🚗 Car</option>
+        <option value="🚢 Ship">🚢 Ship</option>
+      </select>
     </div>
 
-    <!-- AIRPORT FORM -->
-    <div id="form-airport" class="hidden" style="padding: 0 20px;">
-      <div class="field-group">
-        <label>Select Airport</label>
-        <select id="i-airport"><option value="">Search major airports...</option></select>
-      </div>
-      <button class="btn-save" onclick="saveAirport()">Save Airport</button>
+    <div class="field-group">
+      <label>Cities Visited (comma separated)</label>
+      <input type="text" id="i-cities" placeholder="e.g. Tokyo, Kyoto, Osaka" />
+    </div>
+
+    <div class="field-group">
+      <label>Hotels / Stays (comma separated)</label>
+      <input type="text" id="i-hotels" placeholder="e.g. Aman Tokyo, Ritz Kyoto" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-delete" id="tm-delete" onclick="deleteCurrentTrip()">Delete</button>
+      <button class="btn-save" onclick="saveTrip()">Save</button>
     </div>
   </div>
 </div>
@@ -367,99 +368,89 @@ a { color: inherit; text-decoration: none; }
 
 <script>
 // ─── DATA & CONSTANTS ──────────────────────────────────────────
+const TOTAL_COUNTRIES = 195;
+// Reduje la lista para brevedad en código, pero el buscador funciona con estos.
 const COUNTRIES = [
-  {code:'US', name:'United States', flag:'🇺🇸'},
-  {code:'JP', name:'Japan', flag:'🇯🇵'},
-  {code:'FR', name:'France', flag:'🇫🇷'},
-  {code:'IT', name:'Italy', flag:'🇮🇹'},
-  {code:'ES', name:'Spain', flag:'🇪🇸'},
-  {code:'GB', name:'United Kingdom', flag:'🇬🇧'},
-  {code:'DE', name:'Germany', flag:'🇩🇪'},
-  {code:'MX', name:'Mexico', flag:'🇲🇽'},
-  {code:'CA', name:'Canada', flag:'🇨🇦'},
-  // Para mantener el código corto en este ejemplo, añade más aquí...
+  {code:'US',name:'United States',flag:'🇺🇸'}, {code:'JP',name:'Japan',flag:'🇯🇵'},
+  {code:'FR',name:'France',flag:'🇫🇷'}, {code:'IT',name:'Italy',flag:'🇮🇹'},
+  {code:'ES',name:'Spain',flag:'🇪🇸'}, {code:'GB',name:'United Kingdom',flag:'🇬🇧'},
+  {code:'DE',name:'Germany',flag:'🇩🇪'}, {code:'MX',name:'Mexico',flag:'🇲🇽'},
+  {code:'CA',name:'Canada',flag:'🇨🇦'}, {code:'BR',name:'Brazil',flag:'🇧🇷'},
+  {code:'CN',name:'China',flag:'🇨🇳'}, {code:'AU',name:'Australia',flag:'🇦🇺'},
+  {code:'AR',name:'Argentina',flag:'🇦🇷'}, {code:'ZA',name:'South Africa',flag:'🇿🇦'}
 ].sort((a,b) => a.name.localeCompare(b.name));
 
-const US_STATES = [
-  {code:'CA', name:'California'}, {code:'NY', name:'New York'}, 
-  {code:'FL', name:'Florida'}, {code:'TX', name:'Texas'},
-  {code:'IL', name:'Illinois'}, {code:'NV', name:'Nevada'},
-  // ... añadir el resto
-];
-
-const AIRPORTS = [
-  {code:'JFK', name:'John F. Kennedy', city:'New York'},
-  {code:'LAX', name:'Los Angeles Intl', city:'Los Angeles'},
-  {code:'LHR', name:'Heathrow', city:'London'},
-  {code:'CDG', name:'Charles de Gaulle', city:'Paris'},
-  {code:'HND', name:'Haneda', city:'Tokyo'},
-  {code:'MAD', name:'Adolfo Suárez', city:'Madrid'},
-  {code:'FRA', name:'Frankfurt am Main', city:'Frankfurt'},
-].sort((a,b) => a.city.localeCompare(b.city));
-
-// Mapeo TopoJSON ID a ISO A2
-const numToA2 = { 840:'US', 392:'JP', 250:'FR', 380:'IT', 724:'ES', 826:'GB', 276:'DE', 484:'MX', 124:'CA' };
+const numToA2 = { 840:'US', 392:'JP', 250:'FR', 380:'IT', 724:'ES', 826:'GB', 276:'DE', 484:'MX', 124:'CA', 76:'BR', 156:'CN', 36:'AU', 32:'AR', 710:'ZA' };
 
 // ─── STATE ─────────────────────────────────────────────────────
 let state = {
-  trips: [],      // { id, country, state, arr, dep, trans, hotel }
-  airports: [],   // ['JFK', 'MAD']
-  manualVisited: [] // Códigos de países marcados manualmente sin viaje
+  profile: { name: 'Traveler' },
+  airtable: { token: '', base: '', tripsTable: 'Trips', connected: false },
+  trips: [] // { id, airtableId, country, arr, dep, trans, cities, hotels }
 };
 
+let currentEditingId = null;
+let currentCountryContext = null;
 let mapSvg, mapG, pathGen, zoom;
 
-// ─── INIT & LOCAL STORAGE ──────────────────────────────────────
-function loadData() {
-  const d = localStorage.getItem('nisho_data_v2');
-  if (d) state = JSON.parse(d);
+// ─── INIT ──────────────────────────────────────────────────────
+function init() {
+  loadLocal();
   
-  // Rellenar Selects
+  // Rellenar select de países
   const cSel = document.getElementById('i-country');
   COUNTRIES.forEach(c => cSel.add(new Option(c.flag + ' ' + c.name, c.code)));
   
-  const sSel = document.getElementById('i-state');
-  US_STATES.forEach(s => sSel.add(new Option(s.name, s.code)));
-  
-  const aSel = document.getElementById('i-airport');
-  AIRPORTS.forEach(a => aSel.add(new Option(`${a.code} - ${a.city}`, a.code)));
+  if (state.airtable.connected) {
+    document.getElementById('at-status').textContent = 'Connected';
+    document.getElementById('at-status').className = 'airtable-status';
+    document.getElementById('at-token').value = state.airtable.token;
+    document.getElementById('at-base').value = state.airtable.base;
+  }
 
   updateUI();
   initMap();
 }
 
-function saveData() {
-  localStorage.setItem('nisho_data_v2', JSON.stringify(state));
+function loadLocal() {
+  const d = localStorage.getItem('nisho_v3');
+  if (d) state = { ...state, ...JSON.parse(d) };
+}
+
+function saveLocal() {
+  localStorage.setItem('nisho_v3', JSON.stringify(state));
   updateUI();
 }
 
-// ─── LOGIC & STATS ─────────────────────────────────────────────
-function getVisitedCountries() {
-  const set = new Set(state.manualVisited);
-  state.trips.forEach(t => set.add(t.country));
-  return set;
+// ─── LOGIC & UI UPDATES ────────────────────────────────────────
+function getVisitedSet() {
+  return new Set(state.trips.map(t => t.country));
 }
 
 function updateUI() {
-  const visited = getVisitedCountries();
-  const totalDays = state.trips.reduce((acc, t) => {
-    if (!t.arr || !t.dep) return acc;
-    const diffTime = Math.abs(new Date(t.dep) - new Date(t.arr));
-    return acc + Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }, 0);
+  const visited = getVisitedSet();
+  const n = visited.size;
+  const pct = Math.round((n / TOTAL_COUNTRIES) * 100);
+  
+  let days = 0;
+  state.trips.forEach(t => {
+    if (t.arr && t.dep) {
+      days += Math.ceil(Math.abs(new Date(t.dep) - new Date(t.arr)) / (1000 * 60 * 60 * 24));
+    }
+  });
 
-  document.getElementById('hdr-count').textContent = visited.size;
+  document.getElementById('hdr-count').textContent = n;
+  document.getElementById('stat-countries').textContent = n;
+  document.getElementById('progress-bar').style.width = pct + '%';
   document.getElementById('stat-trips').textContent = state.trips.length;
-  document.getElementById('stat-days').textContent = totalDays;
-  document.getElementById('stat-airports').textContent = state.airports.length;
+  document.getElementById('stat-days').textContent = days;
 
   renderMap();
-  renderRoadmap();
   renderCountries();
-  renderAirports();
+  renderRoadmap();
 }
 
-// ─── MAP (D3 + ZOOM) ───────────────────────────────────────────
+// ─── MAP (D3 CON ZOOM RESTRINGIDO) ─────────────────────────────
 function initMap() {
   fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
     .then(r => r.json())
@@ -473,34 +464,27 @@ function initMap() {
       mapSvg = d3.select('#world-map-svg');
       mapG = mapSvg.append('g');
 
-      // Zoom Behavior
+      // Zoom Controlado: no permite salir de los límites
       zoom = d3.zoom()
-        .scaleExtent([1, 8])
+        .scaleExtent([1, 6])
+        .translateExtent([[0, 0], [900, 460]]) // Previene arrastrar al infinito
         .on('zoom', e => mapG.attr('transform', e.transform));
+      
       mapSvg.call(zoom);
 
-      mapG.selectAll('.country')
+      mapG.selectAll('.country-path')
         .data(geo.features)
         .enter()
         .append('path')
-        .attr('class', 'country')
+        .attr('class', 'country-path')
         .attr('d', pathGen)
         .attr('stroke', '#0c0c0c')
         .attr('stroke-width', 0.5)
         .on('click', function(event, d) {
-          // Centrar en el país
-          const bounds = pathGen.bounds(d);
-          const dx = bounds[1][0] - bounds[0][0];
-          const dy = bounds[1][1] - bounds[0][1];
-          const x = (bounds[0][0] + bounds[1][0]) / 2;
-          const y = (bounds[0][1] + bounds[1][1]) / 2;
-          const scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / 900, dy / 460)));
-          const translate = [450 - scale * x, 240 - scale * y];
-
-          mapSvg.transition().duration(750).call(
-            zoom.transform, 
-            d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
-          );
+          const code = d.properties.iso;
+          if (code && COUNTRIES.find(c => c.code === code)) {
+            openCountrySheet(code);
+          }
         });
 
       renderMap();
@@ -509,147 +493,265 @@ function initMap() {
 
 function renderMap() {
   if (!mapG) return;
-  const visited = getVisitedCountries();
-  mapG.selectAll('.country').attr('fill', d => {
+  const visited = getVisitedSet();
+  mapG.selectAll('.country-path').attr('fill', d => {
     return visited.has(d.properties.iso) ? '#b8e060' : '#1e1e1e';
   });
 }
 
-// ─── ROADMAP (TIMELINE) ────────────────────────────────────────
-function renderRoadmap() {
-  const container = document.getElementById('timeline-list');
-  container.innerHTML = '';
-  
-  if (!state.trips.length) {
-    container.innerHTML = '<div style="color:#555; font-size:12px;">No trips logged yet. Tap + to add one.</div>';
-    return;
-  }
-
-  // Ordenar de más reciente a más antiguo
-  const sorted = [...state.trips].sort((a,b) => new Date(b.arr) - new Date(a.arr));
-
-  sorted.forEach(t => {
-    const c = COUNTRIES.find(x => x.code === t.country);
-    const s = US_STATES.find(x => x.code === t.state);
-    const title = c ? `${c.flag} ${c.name}` : 'Unknown';
-    const loc = s ? `<span style="color:#888">, ${s.name}</span>` : '';
-    
-    // Días
-    let days = 0;
-    if(t.arr && t.dep) {
-      days = Math.ceil(Math.abs(new Date(t.dep) - new Date(t.arr)) / (1000 * 60 * 60 * 24));
-    }
-
-    container.innerHTML += `
-      <div class="trip-card">
-        <div class="trip-header">
-          <div>
-            <div class="trip-title">${title}${loc}</div>
-            <div class="trip-dates">${t.arr} to ${t.dep}</div>
-          </div>
-          <div class="trip-transport">${t.trans.split(' ')[0]}</div>
-        </div>
-        <div class="trip-meta">
-          <div class="meta-chip">${days} Days</div>
-          ${t.hotel ? `<div class="meta-chip hotel">🏨 ${t.hotel}</div>` : ''}
-        </div>
-      </div>
-    `;
-  });
-}
-
-// ─── COUNTRIES & AIRPORTS ──────────────────────────────────────
+// ─── COUNTRIES LIST ────────────────────────────────────────────
 function renderCountries() {
   const q = document.getElementById('country-search').value.toLowerCase();
   const list = document.getElementById('countries-list');
-  const visited = getVisitedCountries();
+  const visited = getVisitedSet();
   list.innerHTML = '';
 
   COUNTRIES.filter(c => c.name.toLowerCase().includes(q)).forEach(c => {
     const isV = visited.has(c.code);
     list.innerHTML += `
-      <div class="list-item" onclick="toggleCountry('${c.code}')">
-        <span style="font-size: 20px;">${c.flag}</span>
-        <div class="list-item-title">${c.name}</div>
-        <div class="check-icon ${isV ? 'active' : ''}">
-          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      <div class="country-item" onclick="openCountrySheet('${c.code}')">
+        <span class="country-flag">${c.flag}</span>
+        <div class="country-info">
+          <div class="country-name">${c.name}</div>
+          <div class="country-sub">${isV ? 'Visited' : 'Not visited yet'}</div>
         </div>
       </div>`;
   });
 }
 
-function toggleCountry(code) {
-  if (state.manualVisited.includes(code)) {
-    state.manualVisited = state.manualVisited.filter(c => c !== code);
-  } else {
-    state.manualVisited.push(code);
+// ─── ROADMAP / STORYLINE ───────────────────────────────────────
+function renderRoadmap() {
+  const container = document.getElementById('roadmap-list');
+  container.innerHTML = '';
+  
+  if (!state.trips.length) {
+    container.innerHTML = '<div style="text-align:center; color:#555; font-size:12px; margin-top:40px;">No trips logged yet. Tap + to add your first trip.</div>';
+    return;
   }
-  saveData();
-}
 
-function renderAirports() {
-  const q = document.getElementById('airport-search').value.toLowerCase();
-  const list = document.getElementById('airports-list');
-  list.innerHTML = '';
+  const sorted = [...state.trips].sort((a,b) => new Date(b.arr) - new Date(a.arr));
 
-  state.airports.forEach(code => {
-    const a = AIRPORTS.find(x => x.code === code) || { name:'Unknown', city:'Unknown' };
-    if (!a.city.toLowerCase().includes(q) && !code.toLowerCase().includes(q)) return;
+  sorted.forEach(t => {
+    const c = COUNTRIES.find(x => x.code === t.country) || {name:'Unknown', flag:'🌍'};
+    const days = t.arr && t.dep ? Math.ceil(Math.abs(new Date(t.dep) - new Date(t.arr)) / 86400000) : 0;
     
-    list.innerHTML += `
-      <div class="list-item">
-        <span style="font-size: 18px;">✈️</span>
-        <div class="list-item-title" style="display:flex; justify-content:space-between">
-          <span>${a.city}</span>
-          <strong style="color:#b8e060">${code}</strong>
+    let detailsHtml = '';
+    if (t.cities) detailsHtml += `<div class="detail-line"><span class="detail-icon">📍</span> ${t.cities}</div>`;
+    if (t.hotels) detailsHtml += `<div class="detail-line"><span class="detail-icon">🏨</span> <span class="hotel-highlight">${t.hotels}</span></div>`;
+
+    container.innerHTML += `
+      <div class="trip-card" onclick="openTripForm('${t.id}')">
+        <div class="trip-header">
+          <div>
+            <div class="trip-country">${c.flag} ${c.name}</div>
+            <div class="trip-dates">${t.arr} • ${days} days</div>
+          </div>
+          <div class="trip-trans">${t.trans.split(' ')[0]}</div>
         </div>
+        ${detailsHtml ? `<div class="trip-details">${detailsHtml}</div>` : ''}
       </div>`;
   });
 }
 
-// ─── MODAL LOGIC ───────────────────────────────────────────────
-function openAddModal() { document.getElementById('add-modal').classList.add('open'); }
-function closeModal() { document.getElementById('add-modal').classList.remove('open'); }
+// ─── MODALS & FORMS ────────────────────────────────────────────
+function openCountrySheet(code) {
+  currentCountryContext = code;
+  const c = COUNTRIES.find(x => x.code === code);
+  document.getElementById('cs-flag').textContent = c.flag;
+  document.getElementById('cs-name').textContent = c.name;
+  
+  const history = document.getElementById('cs-history');
+  const trips = state.trips.filter(t => t.country === code).sort((a,b) => new Date(b.arr) - new Date(a.arr));
+  
+  if(trips.length) {
+    history.innerHTML = '<div style="font-size:10px; color:#555; text-transform:uppercase; margin-bottom:8px;">Past Visits</div>';
+    trips.forEach(t => {
+      history.innerHTML += `<div style="background:#181818; padding:12px; border-radius:8px; margin-bottom:8px; font-size:13px; cursor:pointer;" onclick="closeModal('country-sheet'); openTripForm('${t.id}')">
+        <strong style="color:#e8e4de">${t.arr}</strong>
+        ${t.cities ? `<br><span style="color:#888">📍 ${t.cities}</span>` : ''}
+        ${t.hotels ? `<br><span style="color:#b8e060">🏨 ${t.hotels}</span>` : ''}
+      </div>`;
+    });
+  } else {
+    history.innerHTML = '<div style="text-align:center; color:#555; font-size:12px;">You haven\'t visited this country yet.</div>';
+  }
 
-function switchModalTab(tab) {
-  document.getElementById('btn-tab-trip').classList.toggle('active', tab === 'trip');
-  document.getElementById('btn-tab-airport').classList.toggle('active', tab === 'airport');
-  document.getElementById('form-trip').classList.toggle('hidden', tab !== 'trip');
-  document.getElementById('form-airport').classList.toggle('hidden', tab !== 'airport');
+  document.getElementById('country-sheet').classList.add('open');
 }
 
-function checkUSState() {
-  const isUS = document.getElementById('i-country').value === 'US';
-  document.getElementById('fg-state').classList.toggle('hidden', !isUS);
+function openTripFormFromCountry() {
+  closeModal('country-sheet');
+  openTripForm(null, currentCountryContext);
+}
+
+function openTripForm(tripId = null, prefillCountry = null) {
+  currentEditingId = tripId;
+  const modal = document.getElementById('trip-modal');
+  
+  if (tripId) {
+    const t = state.trips.find(x => x.id === tripId);
+    document.getElementById('tm-title').textContent = 'Edit Trip';
+    document.getElementById('tm-delete').style.display = 'block';
+    
+    document.getElementById('i-country').value = t.country;
+    document.getElementById('i-arr').value = t.arr;
+    document.getElementById('i-dep').value = t.dep;
+    document.getElementById('i-trans').value = t.trans;
+    document.getElementById('i-cities').value = t.cities || '';
+    document.getElementById('i-hotels').value = t.hotels || '';
+  } else {
+    document.getElementById('tm-title').textContent = 'Log Trip';
+    document.getElementById('tm-delete').style.display = 'none';
+    
+    document.getElementById('i-country').value = prefillCountry || '';
+    document.getElementById('i-arr').value = '';
+    document.getElementById('i-dep').value = '';
+    document.getElementById('i-trans').value = '✈️ Plane';
+    document.getElementById('i-cities').value = '';
+    document.getElementById('i-hotels').value = '';
+  }
+  
+  modal.classList.add('open');
 }
 
 function saveTrip() {
   const c = document.getElementById('i-country').value;
-  if (!c) return alert("Select a country");
-  
-  state.trips.push({
-    id: Date.now().toString(),
+  if (!c) return alert("Please select a country");
+
+  const tripData = {
     country: c,
-    state: c === 'US' ? document.getElementById('i-state').value : '',
     arr: document.getElementById('i-arr').value,
     dep: document.getElementById('i-dep').value,
     trans: document.getElementById('i-trans').value,
-    hotel: document.getElementById('i-hotel').value
-  });
+    cities: document.getElementById('i-cities').value,
+    hotels: document.getElementById('i-hotels').value
+  };
+
+  if (currentEditingId) {
+    const idx = state.trips.findIndex(t => t.id === currentEditingId);
+    state.trips[idx] = { ...state.trips[idx], ...tripData };
+    if (state.airtable.connected) syncToAirtable(state.trips[idx], 'PATCH');
+  } else {
+    const newTrip = { id: Date.now().toString(), ...tripData };
+    state.trips.push(newTrip);
+    if (state.airtable.connected) syncToAirtable(newTrip, 'POST');
+  }
+
+  saveLocal();
+  closeModal('trip-modal');
+}
+
+function deleteCurrentTrip() {
+  if(!confirm("Delete this trip?")) return;
+  const trip = state.trips.find(t => t.id === currentEditingId);
+  state.trips = state.trips.filter(t => t.id !== currentEditingId);
   
-  saveData();
-  closeModal();
+  if (state.airtable.connected && trip.airtableId) {
+    syncToAirtable(trip, 'DELETE');
+  }
+  
+  saveLocal();
+  closeModal('trip-modal');
 }
 
-function saveAirport() {
-  const a = document.getElementById('i-airport').value;
-  if (!a) return;
-  if (!state.airports.includes(a)) state.airports.push(a);
-  saveData();
-  closeModal();
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── AIRTABLE SYNC ─────────────────────────────────────────────
+/*
+  AIRTABLE SETUP:
+  Table Name: Trips
+  Fields:
+  - ID (Single line text)
+  - Country (Single line text - ISO code like 'JP')
+  - Arrival (Date)
+  - Departure (Date)
+  - Transport (Single line text)
+  - Cities (Single line text)
+  - Hotels (Single line text)
+*/
+
+function showSync(msg, isError = false) {
+  const bar = document.getElementById('sync-bar');
+  bar.textContent = msg; bar.className = 'sync-bar visible' + (isError ? ' error' : '');
+  setTimeout(() => bar.classList.remove('visible'), 2500);
 }
 
-// ─── NAVIGATION ────────────────────────────────────────────────
+async function connectAirtable() {
+  const token = document.getElementById('at-token').value.trim();
+  const base = document.getElementById('at-base').value.trim();
+  const table = document.getElementById('at-trips-table').value.trim() || 'Trips';
+
+  if (!token || !base) return alert("Fill token and base ID");
+  
+  state.airtable = { token, base, tripsTable: table, connected: false };
+  showSync("Connecting...");
+
+  try {
+    const res = await fetch(`https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if(!res.ok) throw new Error("Connection failed");
+    
+    const data = await res.json();
+    
+    // Merge remote data into local state
+    const remoteTrips = data.records.map(r => ({
+      airtableId: r.id,
+      id: r.fields.ID || r.id,
+      country: r.fields.Country || '',
+      arr: r.fields.Arrival || '',
+      dep: r.fields.Departure || '',
+      trans: r.fields.Transport || '✈️ Plane',
+      cities: r.fields.Cities || '',
+      hotels: r.fields.Hotels || ''
+    }));
+
+    // Replace local trips with remote for simplicity (Assuming Airtable is Source of Truth)
+    state.trips = remoteTrips;
+    state.airtable.connected = true;
+    
+    document.getElementById('at-status').textContent = 'Connected';
+    document.getElementById('at-status').className = 'airtable-status';
+    saveLocal();
+    showSync("Sync Successful!");
+  } catch(e) {
+    showSync(e.message, true);
+  }
+}
+
+async function syncToAirtable(trip, method) {
+  const { token, base, tripsTable } = state.airtable;
+  const url = `https://api.airtable.com/v0/${base}/${encodeURIComponent(tripsTable)}` + (method !== 'POST' ? `/${trip.airtableId}` : '');
+  
+  const body = method === 'DELETE' ? null : JSON.stringify({
+    fields: {
+      ID: trip.id,
+      Country: trip.country,
+      Arrival: trip.arr || null,
+      Departure: trip.dep || null,
+      Transport: trip.trans,
+      Cities: trip.cities,
+      Hotels: trip.hotels
+    }
+  });
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body
+    });
+    const data = await res.json();
+    if(method === 'POST' && data.id) {
+      // Update local item with generated Airtable ID
+      const idx = state.trips.findIndex(t => t.id === trip.id);
+      if(idx > -1) state.trips[idx].airtableId = data.id;
+      saveLocal();
+    }
+  } catch(e) { console.error("Airtable sync error", e); }
+}
+
+// ─── NAVIGATOR ─────────────────────────────────────────────────
 function switchScreen(id, btn) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -657,7 +759,7 @@ function switchScreen(id, btn) {
   btn.classList.add('active');
 }
 
-document.addEventListener('DOMContentLoaded', loadData);
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
