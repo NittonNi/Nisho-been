@@ -70,12 +70,12 @@ button{font-family:inherit;cursor:pointer;outline:none}
 .bd-l{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:500;color:var(--t1)}
 .bd-i{font-size:18px;width:24px;text-align:center;opacity:.7}
 .bd-v{font-size:16px;font-weight:600;color:var(--accent)}
-.sw{padding:0 20px 12px;background:var(--bg);position:sticky;top:max(75px,calc(env(safe-area-inset-top)+50px));z-index:9;border-bottom:1px solid var(--b1);transition:var(--tt)}
+.sw{padding:0 20px 12px;background:var(--bg);transition:var(--tt)}
 .si{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--b2);border-radius:12px;padding:0 14px;transition:border 0.2s}
 .si:focus-within{border-color:var(--accent)}
 .si svg{width:16px;height:16px;stroke:var(--t2);flex-shrink:0}
 .si input{flex:1;background:none;border:none;padding:12px 0;font-size:14px;color:var(--t1);outline:none}
-.rtabs{display:flex;gap:8px;padding:16px 20px;overflow-x:auto;scrollbar-width:none}
+.rtabs{display:flex;gap:8px;padding:12px 20px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--b1)}
 .rtab{flex-shrink:0;padding:8px 16px;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--t2);font-size:13px;font-weight:500;transition:all 0.2s}
 .rtab.active{background:var(--t1);color:var(--bg);border-color:var(--t1)}
 .ci{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bg-card);cursor:pointer;transition:background 0.1s}
@@ -202,10 +202,10 @@ button{font-family:inherit;cursor:pointer;outline:none}
 
   <div class="screen" id="sco">
     <div class="sh"><div class="sh-title">Countries</div><div class="sh-sub">Exploration</div></div>
-    <div class="sw"><div class="si"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="cs" placeholder="Search country…" oninput="renderC()"/></div></div>
+    <div style="position:sticky;top:0;z-index:9;background:var(--bg)"><div class="sw"><div class="si"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="cs" placeholder="Search country…" oninput="renderC()"/></div></div>
     <div class="rtabs" id="rs"></div>
+    </div>
     <div id="cl"></div>
-  </div>
 
   <div class="screen" id="sjm">
     <div class="sh"><div class="sh-title">Roadmap</div><div class="sh-sub">Chronicles</div></div>
